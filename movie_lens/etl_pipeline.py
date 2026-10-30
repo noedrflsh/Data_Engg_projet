@@ -1,12 +1,27 @@
 import io
 import time
 import os
+from pathlib import Path
 import re
 import pandas as pd
 import numpy as np
 import psycopg
 
-DB_URI = "dbname=movie_lens user=gumbo password=2836 host=localhost port=5432"
+# Load .env if available
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent / '.env')
+    load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+except ImportError:
+    pass
+
+DB_NAME = os.environ.get("DB_NAME", "movie_lens")
+DB_USER = os.environ.get("DB_USER", "gumbo")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "2836")
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_PORT = os.environ.get("DB_PORT", "5432")
+
+DB_URI = f"dbname={DB_NAME} user={DB_USER} password={DB_PASSWORD} host={DB_HOST} port={DB_PORT}"
 
 def fast_copy(cur, table_name, columns, buffer):
     buffer.seek(0)

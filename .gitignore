@@ -23,5 +23,7 @@ movie_lens/ml-32m/
 # Django local / logs
 *.log
 local_settings.py
+.env
+*.env
 db.sqlite3
 db.sqlite3-journal
