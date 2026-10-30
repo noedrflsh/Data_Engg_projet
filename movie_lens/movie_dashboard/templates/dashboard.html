@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieLens OLAP Analytics &bull; IIT Palakkad</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Tabler / Feather Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-surface: #111827;
+            --bg-surface-elevated: #161f33;
+            --border-subtle: #1f293d;
+            --border-focus: #3b82f6;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-purple: #8b5cf6;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            letter-spacing: -0.01em;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Top Navbar */
+        .app-navbar {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+        }
+
+        /* Metric Pill */
+        .header-metric {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: #161f30;
+            border: 1px solid var(--border-subtle);
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+        }
+        .header-metric strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Surface Cards */
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            position: relative;
+            transition: border-color 0.15s ease;
+        }
+        .panel:hover {
+            border-color: #2b3952;
+        }
+        .panel-header {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .panel-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel-body {
+            padding: 18px;
+        }
+
+        /* Tag / Badge */
+        .badge-subtle {
+            font-size: 0.72rem;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(59, 130, 246, 0.12);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+
+        /* Selected Movie Hero Banner */
+        .movie-hero {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(17, 24, 39, 0.95) 100%);
+            border: 1px solid #26354f;
+            border-radius: 10px;
+            padding: 16px 20px;
+        }
+
+        /* Quick Pick Pills */
+        .quick-pick-btn {
+            font-size: 0.75rem;
+            background: #172033;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .quick-pick-btn:hover {
+            background: var(--accent-blue);
+            color: #ffffff;
+            border-color: var(--accent-blue);
+        }
+
+        /* Autocomplete dropdown */
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #151d2f;
+            border: 1px solid #293853;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 1050;
+            margin-top: 4px;
+        }
+        .search-item {
+            padding: 9px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #1f2a3f;
+            transition: background 0.12s;
+        }
+        .search-item:last-child { border-bottom: none; }
+        .search-item:hover {
+            background: #1d2a45;
+        }
+
+        /* Star Rating */
+        .star-box {
+            display: inline-flex;
+            gap: 6px;
+            font-size: 1.5rem;
+            color: #374151;
+            cursor: pointer;
+        }
+        .star-box i {
+            transition: color 0.12s ease, transform 0.12s ease;
+        }
+        .star-box i.filled {
+            color: var(--accent-amber);
+        }
+        .star-box i:hover {
+            transform: scale(1.15);
+        }
+
+        /* Genre Pills */
+        .genre-btn {
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 5px 12px;
+            border-radius: 6px;
+            background: #151d2e;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .genre-btn.active, .genre-btn:hover {
+            background: var(--accent-blue);
+            color: #ffffff;
+            border-color: var(--accent-blue);
+        }
+
+        /* Chart Canvas wrapper */
+        .chart-box {
+            position: relative;
+            width: 100%;
+            height: 260px;
+        }
+        .chart-box-lg {
+            position: relative;
+            width: 100%;
+            height: 320px;
+        }
+
+        /* Form Inputs */
+        .form-control, .form-select {
+            background-color: #131b2c;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #151f33;
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            color: var(--text-primary);
+        }
+
+        /* Toast notifications */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 12px 18px;
+            color: #f8fafc;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            display: none;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Executive Top Navbar -->
+    <header class="app-navbar py-2 px-4">
+        <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="d-inline-flex p-2 rounded-2" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+                        <i class="ti ti-chart-bar fs-5"></i>
+                    </span>
+                    <div>
+                        <h6 class="mb-0 fw-semibold text-white">MovieLens Analytics</h6>
+                        <small class="text-secondary" style="font-size: 0.72rem;">IIT Palakkad &bull; DS5003 Data Engineering Lab</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OLAP Database Telemetry -->
+            <div class="d-none d-md-flex align-items-center gap-2 font-mono">
+                <div class="header-metric">
+                    <i class="ti ti-database text-primary"></i>
+                    <span>Ratings: <strong>32,000,204</strong></span>
+                </div>
+                <div class="header-metric">
+                    <i class="ti ti-movie text-success"></i>
+                    <span>Movies: <strong>87,585</strong></span>
+                </div>
+                <div class="header-metric">
+                    <i class="ti ti-bolt text-warning"></i>
+                    <span>Engine: <strong>PostgreSQL 16</strong></span>
+                </div>
+                <div class="header-metric">
+                    <i class="ti ti-activity text-info"></i>
+                    <span>Latency: <strong id="globalLatency">- ms</strong></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container-fluid px-4 py-4">
+
+        <!-- ========================================================= -->
+        <!-- Filter & Search Command Bar                              -->
+        <!-- ========================================================= -->
+        <section class="panel p-3 mb-4">
+            <div class="row g-3 align-items-center">
+                <!-- Movie Search Autocomplete -->
+                <div class="col-lg-5 col-md-6 position-relative">
+                    <label class="form-label text-secondary small mb-1 fw-medium">
+                        <i class="ti ti-search me-1"></i>Search Movie (Questions 3a, 3d & Rating):
+                    </label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark-subtle border-secondary-subtle text-secondary">
+                            <i class="ti ti-film"></i>
+                        </span>
+                        <input type="text" id="movieSearchInput" class="form-control" placeholder="Type title (e.g. Shawshank, Inception, Matrix, Pulp Fiction)..." autocomplete="off" value="Toy Story">
+                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch">
+                            <i class="ti ti-x"></i>
+                        </button>
+                    </div>
+                    <div id="searchDropdown" class="search-results-dropdown" style="display: none;"></div>
+                </div>
+
+                <!-- Global Year Filter -->
+                <div class="col-lg-3 col-md-3">
+                    <label class="form-label text-secondary small mb-1 fw-medium">
+                        <i class="ti ti-calendar me-1"></i>Release Year Filter (Questions 3b, 3f):
+                    </label>
+                    <select id="yearSelector" class="form-select font-mono">
+                        <option value="">Overall (All-Time)</option>
+                        <option value="2019">2019</option>
+                        <option value="2018">2018</option>
+                        <option value="2017" selected>2017</option>
+                        <option value="2016">2016</option>
+                        <option value="2015">2015</option>
+                        <option value="2010">2010</option>
+                        <option value="2005">2005</option>
+                        <option value="2000">2000</option>
+                        <option value="1995">1995</option>
+                        <option value="1994">1994</option>
+                    </select>
+                </div>
+
+                <!-- Quick Pick Suggestions -->
+                <div class="col-lg-4 col-md-3">
+                    <span class="text-secondary small d-block mb-1 fw-medium">Quick Benchmarks:</span>
+                    <div class="d-flex flex-wrap gap-1">
+                        <button class="quick-pick-btn" data-id="1" data-title="Toy Story (1995)">Toy Story</button>
+                        <button class="quick-pick-btn" data-id="318" data-title="Shawshank Redemption">Shawshank</button>
+                        <button class="quick-pick-btn" data-id="2571" data-title="Matrix, The">The Matrix</button>
+                        <button class="quick-pick-btn" data-id="79132" data-title="Inception">Inception</button>
+                        <button class="quick-pick-btn" data-id="296" data-title="Pulp Fiction">Pulp Fiction</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- Selected Movie Metadata Banner                           -->
+        <!-- ========================================================= -->
+        <section class="movie-hero mb-4">
+            <div class="row align-items-center g-3">
+                <div class="col-md-7">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 font-mono" id="movieBadgeId">Movie #1</span>
+                        <span class="text-secondary small font-mono" id="movieReleaseYear">1995</span>
+                    </div>
+                    <h4 class="mb-2 fw-bold text-white" id="movieHeroTitle">Toy Story</h4>
+                    <div class="d-flex flex-wrap gap-1" id="movieGenresList">
+                        <span class="badge bg-secondary-subtle text-light">Adventure</span>
+                        <span class="badge bg-secondary-subtle text-light">Animation</span>
+                        <span class="badge bg-secondary-subtle text-light">Children</span>
+                        <span class="badge bg-secondary-subtle text-light">Comedy</span>
+                        <span class="badge bg-secondary-subtle text-light">Fantasy</span>
+                    </div>
+                </div>
+                <div class="col-md-5 d-flex justify-content-md-end gap-3 font-mono">
+                    <div class="text-md-end">
+                        <span class="text-secondary small d-block">Average Rating</span>
+                        <div class="d-flex align-items-center justify-content-md-end gap-1">
+                            <i class="ti ti-star-filled text-warning"></i>
+                            <span class="fs-4 fw-bold text-white" id="movieHeroAvg">3.90</span>
+                            <span class="text-secondary">/ 5.0</span>
+                        </div>
+                    </div>
+                    <div class="vr my-1 opacity-25"></div>
+                    <div class="text-md-end">
+                        <span class="text-secondary small d-block">Total Reviews</span>
+                        <span class="fs-4 fw-bold text-white" id="movieHeroVotes">68,997</span>
+                        <small class="text-secondary d-block">ratings</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- Section 1: Questions 3(a), 3(d) & User Rating (Problem 4) -->
+        <!-- ========================================================= -->
+        <div class="row g-4 mb-4">
+            <!-- Question 3(a): Top-5 Tag Relevance -->
+            <div class="col-xl-4 col-lg-6">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <h6 class="panel-title">
+                            <i class="ti ti-tags text-primary"></i>
+                            3(a) Top-5 Tag Relevance Scores
+                        </h6>
+                        <span class="badge-subtle font-mono" id="tagRelevanceLatency">0 ms</span>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-secondary small mb-3">Relevance scores calculated per movie (from genome or user-tag frequencies):</p>
+                        <div class="chart-box">
+                            <canvas id="chartTags"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3(d): Rating Distribution for Selected Movie -->
+            <div class="col-xl-4 col-lg-6">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <h6 class="panel-title">
+                            <i class="ti ti-chart-histogram text-warning"></i>
+                            3(d) User Rating Distribution
+                        </h6>
+                        <span class="badge-subtle font-mono" id="ratingDistLatency">0 ms</span>
+                    </div>
+                    <div class="panel-body">
+                        <p class="text-secondary small mb-3">Frequency of ratings across 10 discrete intervals (0.5 to 5.0 stars):</p>
+                        <div class="chart-box">
+                            <canvas id="chartRatingDist"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Problem 4: Role-Based User Rating Interaction -->
+            <div class="col-xl-4 col-lg-12">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <h6 class="panel-title">
+                            <i class="ti ti-user-check text-success"></i>
+                            Problem 4: User Rating Action
+                        </h6>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle font-mono">User Role</span>
+                    </div>
+                    <div class="panel-body d-flex flex-column justify-content-between">
+                        <div>
+                            <p class="text-secondary small mb-3">
+                                As per specification, authenticated users can rate or modify their existing rating for any movie in the database.
+                            </p>
+                            
+                            <div class="p-3 rounded-3 mb-3" style="background: #141c2c; border: 1px solid #1f2b40;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-secondary small">Your Rating:</span>
+                                    <span class="fw-bold font-mono text-warning fs-5" id="userRatingLabel">4.5 ★</span>
+                                </div>
+                                <div class="text-center py-2">
+                                    <div class="star-box" id="interactiveStars">
+                                        <i class="ti ti-star-filled filled" data-val="1"></i>
+                                        <i class="ti ti-star-filled filled" data-val="2"></i>
+                                        <i class="ti ti-star-filled filled" data-val="3"></i>
+                                        <i class="ti ti-star-filled filled" data-val="4"></i>
+                                        <i class="ti ti-star-half-filled filled" data-val="4.5"></i>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between text-secondary" style="font-size: 0.72rem;">
+                                    <span>0.5 Stars</span>
+                                    <span>2.5 Stars</span>
+                                    <span>5.0 Stars</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button class="btn btn-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-medium" id="btnSaveRating">
+                                <i class="ti ti-device-floppy"></i>
+                                Save / Update Rating in PostgreSQL
+                            </button>
+                            <div id="ratingAlert" class="mt-2 text-center small font-mono" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- Section 2: Questions 3(b) & 3(f)                          -->
+        <!-- ========================================================= -->
+        <div class="row g-4 mb-4">
+            <!-- Question 3(b): Top 10 Movies Leaderboard -->
+            <div class="col-lg-7">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="panel-title">
+                                <i class="ti ti-trophy text-amber"></i>
+                                3(b) Top 10 Movies by Average Rating
+                            </h6>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-mono" id="topMoviesFilterBadge">Year: 2017</span>
+                        </div>
+                        <span class="badge-subtle font-mono" id="topMoviesLatency">0 ms</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-box-lg">
+                            <canvas id="chartTopMovies"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3(f): Dominant Genre for Specified Year -->
+            <div class="col-lg-5">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <div class="d-flex align-items-center gap-2">
+                            <h6 class="panel-title">
+                                <i class="ti ti-crown text-danger"></i>
+                                3(f) Dominant Genre
+                            </h6>
+                            <span class="badge bg-secondary-subtle text-light font-mono" id="dominantYearPill">2017</span>
+                        </div>
+                        <span class="badge-subtle font-mono" id="dominantLatency">0 ms</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-3" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2);">
+                            <div>
+                                <small class="text-secondary text-uppercase fw-semibold" style="font-size: 0.7rem; letter-spacing: 0.05em;">#1 Release Category</small>
+                                <h3 class="mb-0 fw-bold text-white" id="dominantGenreTitle">Drama</h3>
+                            </div>
+                            <div class="text-end font-mono">
+                                <span class="fs-4 fw-bold text-danger" id="dominantGenreCount">1,423</span>
+                                <small class="text-secondary d-block">films released</small>
+                            </div>
+                        </div>
+                        <div class="chart-box" style="height: 215px;">
+                            <canvas id="chartDominantGenre"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- Section 3: Questions 3(c), 3(g) & 3(e)                    -->
+        <!-- ========================================================= -->
+        <div class="row g-4">
+            <!-- Question 3(c): Most Popular Tags by Genre -->
+            <div class="col-lg-4 col-md-6">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <h6 class="panel-title">
+                            <i class="ti ti-hash text-success"></i>
+                            3(c) Popular Tags by Genre
+                        </h6>
+                        <span class="badge-subtle font-mono" id="genreTagsLatency">0 ms</span>
+                    </div>
+                    <div class="panel-body">
+                        <!-- Genre Selection Buttons -->
+                        <div class="d-flex flex-wrap gap-1 mb-3" id="genreFilterPills">
+                            <button class="genre-btn active" data-genre="Action">Action</button>
+                            <button class="genre-btn" data-genre="Comedy">Comedy</button>
+                            <button class="genre-btn" data-genre="Drama">Drama</button>
+                            <button class="genre-btn" data-genre="Sci-Fi">Sci-Fi</button>
+                            <button class="genre-btn" data-genre="Thriller">Thriller</button>
+                            <button class="genre-btn" data-genre="Horror">Horror</button>
+                            <button class="genre-btn" data-genre="Animation">Animation</button>
+                        </div>
+                        <div class="chart-box" style="height: 220px;">
+                            <canvas id="chartGenreTags"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3(g): Genre-wise Coverage -->
+            <div class="col-lg-4 col-md-6">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <h6 class="panel-title">
+                            <i class="ti ti-chart-pie text-info"></i>
+                            3(g) Genre Coverage (% of Catalog)
+                        </h6>
+                        <span class="badge-subtle font-mono" id="coverageLatency">0 ms</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-box">
+                            <canvas id="chartGenreCoverage"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question 3(e): Total Ratings Volume Distribution -->
+            <div class="col-lg-4 col-md-12">
+                <div class="panel h-100">
+                    <div class="panel-header">
+                        <h6 class="panel-title">
+                            <i class="ti ti-chart-bar text-purple"></i>
+                            3(e) Total Ratings Volume Distribution
+                        </h6>
+                        <span class="badge-subtle font-mono" id="volumeLatency">0 ms</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="chart-box">
+                            <canvas id="chartRatingsVolume"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Global Toast Alert -->
+    <div id="toastAlert" class="toast-notify"></div>
+
+    <!-- ========================================================= -->
+    <!-- Executive Dashboard Analytics Engine Script               -->
+    <!-- ========================================================= -->
+    <script>
+        // Global State
+        let activeMovieId = 1;
+        let activeRating = 4.5;
+        let activeYear = 2017;
+        let cachedGenreTags = null;
+        const charts = {};
+
+        // Helper: Chart.js default theme configuration
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.05)';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        function renderChart(canvasId, config) {
+            if (charts[canvasId]) {
+                charts[canvasId].destroy();
+            }
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            charts[canvasId] = new Chart(ctx, config);
+            return charts[canvasId];
+        }
+
+        function showToast(msg, isSuccess = true) {
+            const toast = document.getElementById('toastAlert');
+            toast.textContent = msg;
+            toast.style.borderColor = isSuccess ? '#10b981' : '#f43f5e';
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+
+        // =============================================================
+        // 1. Movie Details Loader
+        // =============================================================
+        async function loadMovieDetails(movieId) {
+            try {
+                const res = await fetch(`/api/movies/details/?movie_id=${movieId}`);
+                if (!res.ok) return;
+                const d = await res.json();
+                
+                document.getElementById('movieHeroTitle').textContent = d.title;
+                document.getElementById('movieBadgeId').textContent = `Movie #${d.movie_id}`;
+                document.getElementById('movieReleaseYear').textContent = d.release_year || 'Unknown';
+                document.getElementById('movieHeroAvg').textContent = d.avg_rating.toFixed(2);
+                document.getElementById('movieHeroVotes').textContent = d.total_ratings.toLocaleString();
+
+                const genresContainer = document.getElementById('movieGenresList');
+                genresContainer.innerHTML = '';
+                (d.genres || []).forEach(g => {
+                    const span = document.createElement('span');
+                    span.className = 'badge bg-secondary-subtle text-light';
+                    span.textContent = g;
+                    genresContainer.appendChild(span);
+                });
+            } catch (err) {
+                console.error("Failed to load movie details:", err);
+            }
+        }
+
+        // =============================================================
+        // 2. Scenario 3(a): Top-5 Tag Relevance Scores
+        // =============================================================
+        async function loadMovieTags(movieId) {
+            try {
+                const res = await fetch(`/api/analytics/movie-tags/?movie_id=${movieId}`);
+                const data = await res.json();
+                document.getElementById('tagRelevanceLatency').textContent = `${data.latency_ms} ms`;
+                const tags = data.tags || [];
+
+                renderChart('chartTags', {
+                    type: 'bar',
+                    data: {
+                        labels: tags.map(t => t.tag),
+                        datasets: [{
+                            label: 'Relevance',
+                            data: tags.map(t => t.relevance),
+                            backgroundColor: 'rgba(59, 130, 246, 0.75)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => `Score: ${ctx.parsed.x.toFixed(4)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { beginAtZero: true, max: 1.0, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to load movie tags:", err);
+            }
+        }
+
+        // =============================================================
+        // 3. Scenario 3(d): User Rating Distribution (0.5 to 5.0)
+        // =============================================================
+        async function loadRatingDistribution(movieId) {
+            try {
+                const res = await fetch(`/api/analytics/rating-distribution/?movie_id=${movieId}`);
+                const data = await res.json();
+                document.getElementById('ratingDistLatency').textContent = `${data.latency_ms} ms`;
+                const dist = data.distribution || [];
+
+                renderChart('chartRatingDist', {
+                    type: 'bar',
+                    data: {
+                        labels: dist.map(d => `${d.rating}★`),
+                        datasets: [{
+                            label: 'Votes',
+                            data: dist.map(d => d.count),
+                            backgroundColor: 'rgba(245, 158, 11, 0.75)',
+                            borderColor: '#f59e0b',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to load rating distribution:", err);
+            }
+        }
+
+        // =============================================================
+        // 4. Scenario 3(b): Top 10 Movies
+        // =============================================================
+        async function loadTopMovies(year = null) {
+            try {
+                const url = year ? `/api/analytics/top-movies/?year=${year}` : '/api/analytics/top-movies/';
+                const res = await fetch(url);
+                const data = await res.json();
+                document.getElementById('topMoviesLatency').textContent = `${data.latency_ms} ms`;
+                document.getElementById('topMoviesFilterBadge').textContent = year ? `Year: ${year}` : 'Overall';
+                const movies = data.movies || [];
+
+                renderChart('chartTopMovies', {
+                    type: 'bar',
+                    data: {
+                        labels: movies.map(m => m.title.length > 28 ? m.title.substring(0, 26) + '...' : m.title),
+                        datasets: [{
+                            label: 'Average Rating (★)',
+                            data: movies.map(m => m.avg_rating),
+                            backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: (ctx) => `Total Reviews: ${movies[ctx.dataIndex].total_ratings.toLocaleString()} | Year: ${movies[ctx.dataIndex].release_year || 'N/A'}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { min: 3.5, max: 5.0, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to load top movies:", err);
+            }
+        }
+
+        // =============================================================
+        // 5. Scenario 3(f): Dominant Genre
+        // =============================================================
+        async function loadDominantGenre(year = 2017) {
+            try {
+                const res = await fetch(`/api/analytics/dominant-genre/?year=${year}`);
+                const data = await res.json();
+                document.getElementById('dominantLatency').textContent = `${data.latency_ms} ms`;
+                document.getElementById('dominantYearPill').textContent = year;
+
+                if (data.dominant) {
+                    document.getElementById('dominantGenreTitle').textContent = data.dominant.genre;
+                    document.getElementById('dominantGenreCount').textContent = data.dominant.count.toLocaleString();
+                }
+
+                const allGenres = (data.all_genres || []).slice(0, 6);
+                renderChart('chartDominantGenre', {
+                    type: 'bar',
+                    data: {
+                        labels: allGenres.map(g => g.genre),
+                        datasets: [{
+                            label: 'Releases',
+                            data: allGenres.map(g => g.count),
+                            backgroundColor: 'rgba(244, 63, 94, 0.75)',
+                            borderColor: '#f43f5e',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to load dominant genre:", err);
+            }
+        }
+
+        // =============================================================
+        // 6. Scenario 3(c): Popular Tags by Genre
+        // =============================================================
+        async function loadGenreTags(selectedGenre = "Action") {
+            try {
+                if (!cachedGenreTags) {
+                    const res = await fetch('/api/analytics/popular-tags-genre/');
+                    const data = await res.json();
+                    cachedGenreTags = data.genres || {};
+                    document.getElementById('genreTagsLatency').textContent = `${data.latency_ms} ms`;
+                }
+
+                const tags = cachedGenreTags[selectedGenre] || [];
+                renderChart('chartGenreTags', {
+                    type: 'bar',
+                    data: {
+                        labels: tags.map(t => t.tag),
+                        datasets: [{
+                            label: 'Occurrences',
+                            data: tags.map(t => t.count),
+                            backgroundColor: 'rgba(16, 185, 129, 0.75)',
+                            borderColor: '#10b981',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to load genre tags:", err);
+            }
+        }
+
+        // =============================================================
+        // 7. Scenario 3(g): Genre-wise Movie Coverage
+        // =============================================================
+        async function loadGenreCoverage() {
+            try {
+                const res = await fetch('/api/analytics/genre-coverage/');
+                const data = await res.json();
+                document.getElementById('coverageLatency').textContent = `${data.latency_ms} ms`;
+                const cov = data.coverage || [];
+
+                renderChart('chartGenreCoverage', {
+                    type: 'doughnut',
+                    data: {
+                        labels: cov.slice(0, 8).map(c => c.genre),
+                        datasets: [{
+                            data: cov.slice(0, 8).map(c => c.coverage_pct),
+                            backgroundColor: [
+                                '#3b82f6', '#10b981', '#f59e0b', '#f43f5e',
+                                '#8b5cf6', '#ec4899', '#06b6d4', '#64748b'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => `${ctx.label}: ${ctx.parsed}% of catalog`
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to load genre coverage:", err);
+            }
+        }
+
+        // =============================================================
+        // 8. Scenario 3(e): Total Ratings Volume Distribution
+        // =============================================================
+        async function loadTotalRatingsVolume() {
+            try {
+                const res = await fetch('/api/analytics/total-ratings-distribution/');
+                const data = await res.json();
+                document.getElementById('volumeLatency').textContent = `${data.latency_ms} ms`;
+                const dist = data.distribution || [];
+
+                renderChart('chartRatingsVolume', {
+                    type: 'bar',
+                    data: {
+                        labels: dist.map(d => d.bucket),
+                        datasets: [{
+                            label: 'Titles',
+                            data: dist.map(d => d.count),
+                            backgroundColor: 'rgba(139, 92, 246, 0.75)',
+                            borderColor: '#8b5cf6',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.04)' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error("Failed to load ratings volume:", err);
+            }
+        }
+
+        // =============================================================
+        // 9. Autocomplete Search Logic
+        // =============================================================
+        let searchDebounce;
+        const searchInput = document.getElementById('movieSearchInput');
+        const searchDropdown = document.getElementById('searchDropdown');
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            const q = searchInput.value.trim();
+            if (q.length < 2) {
+                searchDropdown.style.display = 'none';
+                return;
+            }
+            searchDebounce = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/movies/search/?q=${encodeURIComponent(q)}`);
+                    const data = await res.json();
+                    const results = data.results || [];
+                    searchDropdown.innerHTML = '';
+                    if (results.length === 0) {
+                        searchDropdown.innerHTML = '<div class="p-3 text-secondary small">No matching movies found</div>';
+                    } else {
+                        results.forEach(m => {
+                            const div = document.createElement('div');
+                            div.className = 'search-item';
+                            div.innerHTML = `
+                                <div>
+                                    <span class="text-white fw-medium">${m.title}</span>
+                                    <small class="text-secondary ms-1">(${m.release_year || 'N/A'})</small>
+                                </div>
+                                <span class="badge bg-dark text-secondary font-mono">#${m.movie_id}</span>
+                            `;
+                            div.onclick = () => selectMovie(m.movie_id, m.title);
+                            searchDropdown.appendChild(div);
+                        });
+                    }
+                    searchDropdown.style.display = 'block';
+                } catch (e) {
+                    console.error("Autocomplete failure:", e);
+                }
+            }, 250);
+        });
+
+        document.getElementById('btnClearSearch').addEventListener('click', () => {
+            searchInput.value = '';
+            searchDropdown.style.display = 'none';
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.style.display = 'none';
+            }
+        });
+
+        function selectMovie(id, title) {
+            activeMovieId = id;
+            searchInput.value = title;
+            searchDropdown.style.display = 'none';
+            loadMovieDetails(id);
+            loadMovieTags(id);
+            loadRatingDistribution(id);
+        }
+
+        // Quick Pick Click Handlers
+        document.querySelectorAll('.quick-pick-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = parseInt(btn.dataset.id);
+                const title = btn.dataset.title;
+                selectMovie(id, title);
+            });
+        });
+
+        // =============================================================
+        // 10. Problem 4: Interactive Star Rating Handler
+        // =============================================================
+        const starIcons = document.querySelectorAll('#interactiveStars i');
+        starIcons.forEach(star => {
+            star.addEventListener('click', () => {
+                activeRating = parseFloat(star.dataset.val);
+                document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
+                updateStarVisuals(activeRating);
+            });
+        });
+
+        function updateStarVisuals(rating) {
+            starIcons.forEach(s => {
+                const val = parseFloat(s.dataset.val);
+                if (val <= rating) {
+                    s.className = 'ti ti-star-filled filled';
+                } else if (val - 0.5 <= rating) {
+                    s.className = 'ti ti-star-half-filled filled';
+                } else {
+                    s.className = 'ti ti-star';
+                }
+            });
+        }
+
+        document.getElementById('btnSaveRating').addEventListener('click', async () => {
+            const alertBox = document.getElementById('ratingAlert');
+            alertBox.style.display = 'block';
+            alertBox.className = 'mt-2 text-center small font-mono text-secondary';
+            alertBox.textContent = 'Writing to PostgreSQL fact_ratings...';
+
+            try {
+                const res = await fetch('/api/ratings/rate/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ movie_id: activeMovieId, rating: activeRating })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alertBox.className = 'mt-2 text-center small font-mono text-success';
+                    alertBox.textContent = `✓ Rating of ${activeRating}★ recorded in database!`;
+                    showToast(`Rating of ${activeRating}★ committed to fact_ratings!`);
+                    // Refresh movie details & distribution
+                    loadMovieDetails(activeMovieId);
+                    loadRatingDistribution(activeMovieId);
+                } else {
+                    alertBox.className = 'mt-2 text-center small font-mono text-danger';
+                    alertBox.textContent = data.error || 'Failed to record rating';
+                }
+            } catch (err) {
+                alertBox.className = 'mt-2 text-center small font-mono text-danger';
+                alertBox.textContent = 'Network or server error submitting rating';
+            }
+        });
+
+        // Year Selector Change
+        document.getElementById('yearSelector').addEventListener('change', (e) => {
+            activeYear = e.target.value;
+            loadTopMovies(activeYear);
+            loadDominantGenre(activeYear || 2017);
+        });
+
+        // Genre Pill Filters
+        document.querySelectorAll('.genre-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                loadGenreTags(btn.dataset.genre);
+            });
+        });
+
+        // Initialize Everything on DOM Load
+        window.addEventListener('DOMContentLoaded', async () => {
+            const t0 = performance.now();
+            await Promise.all([
+                loadMovieDetails(1),
+                loadMovieTags(1),
+                loadRatingDistribution(1),
+                loadTopMovies(2017),
+                loadDominantGenre(2017),
+                loadGenreTags("Action"),
+                loadGenreCoverage(),
+                loadTotalRatingsVolume()
+            ]);
+            const elapsed = Math.round(performance.now() - t0);
+            document.getElementById('globalLatency').textContent = `${elapsed} ms`;
+        });
+    </script>
+</body>
+</html>

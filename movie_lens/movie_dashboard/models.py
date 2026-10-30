@@ -20,9 +20,9 @@ class DimGenre(models.Model):
 
 
 class BridgeMovieGenre(models.Model):
-    # For many-to-many bridge tables without a single surrogate PK, 
+    # For many-to-many bridge tables without a single surrogate PK,
     # link them as standard foreign keys.
-    movie = models.ForeignKey(DimMovie, on_delete=models.DO_NOTHING, db_column='movie_id')
+    movie = models.ForeignKey(DimMovie, on_delete=models.DO_NOTHING, db_column='movie_id', primary_key=True)
     genre = models.ForeignKey(DimGenre, on_delete=models.DO_NOTHING, db_column='genre_id')
 
     class Meta:
@@ -73,3 +73,36 @@ class FactTag(models.Model):
     class Meta:
         managed = False
         db_table = 'fact_tags'
+
+class DimGenomeTag(models.Model):
+    tag_id = models.IntegerField(primary_key=True,
+	db_column='tag_id')
+    tag = models.CharField(max_length=255, db_column='tag')
+
+    class Meta:
+        managed = False
+        db_table = 'dim_genome_tags'
+
+    def __str__(self):
+        return self.tag
+
+class FactGenomeScore(models.Model):
+	# 	# In unmanaged models with composite
+	# primary keys in PostgreSQL,
+	# # we mark the first FK as primary_key to
+	# satisfy Django ORM
+    movie = models.ForeignKey(DimMovie,
+        on_delete=models.DO_NOTHING,
+        db_column='movie_id', primary_key=True)
+    tag = models.ForeignKey(DimGenomeTag,
+        on_delete=models.DO_NOTHING,
+        db_column='tag_id')
+    relevance = models.FloatField(db_column='relevance')
+
+    class Meta:
+        managed = False
+        db_table = 'fact_genome_scores'
+        unique_together = (('movie', 'tag'),)
+
+    def __str__(self):
+        return f"{self.movie_id} - {self.tag_id}: {self.relevance}"
