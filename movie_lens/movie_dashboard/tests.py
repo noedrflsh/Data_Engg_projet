@@ -1,4 +1,5 @@
 from django.test import TestCase, Client
+from django.contrib.auth.models import User
 import json
 
 
@@ -10,6 +11,8 @@ class MovieLensAnalyticsAPITests(TestCase):
 
     def setUp(self):
         self.client = Client()
+        if not User.objects.filter(username='demo_user').exists():
+            User.objects.create_user(username='demo_user', password='movielens2024', is_staff=False)
 
     def test_dashboard_renders(self):
         """Verify dashboard root HTML page loads successfully."""
@@ -99,8 +102,20 @@ class MovieLensAnalyticsAPITests(TestCase):
         self.assertGreater(len(data['coverage']), 0)
 
     def test_problem_4_rating_submission(self):
-        """Problem 4: User interactive rating submission and modification."""
+        """Problem 4: User interactive rating submission and modification with auth enforcement."""
         payload = {'movie_id': 1, 'rating': 4.5}
+
+        # 1. Unauthenticated request should be rejected (HTTP 401)
+        self.client.logout()
+        response = self.client.post(
+            '/api/ratings/rate/',
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 401)
+
+        # 2. Authenticated user can rate/modify
+        self.client.login(username='demo_user', password='movielens2024')
         response = self.client.post(
             '/api/ratings/rate/',
             data=json.dumps(payload),
@@ -110,3 +125,21 @@ class MovieLensAnalyticsAPITests(TestCase):
         data = json.loads(response.content)
         self.assertTrue(data['success'])
         self.assertEqual(data['rating'], 4.5)
+
+    def test_authentication_endpoints(self):
+        """Verify login, register, and current user info endpoints."""
+        self.client.logout()
+
+        res = self.client.get('/login/')
+        self.assertEqual(res.status_code, 200)
+
+        res = self.client.get('/register/')
+        self.assertEqual(res.status_code, 200)
+
+        self.client.login(username='demo_user', password='movielens2024')
+        res = self.client.get('/api/user/me/')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.content)
+        self.assertTrue(data['authenticated'])
+        self.assertEqual(data['username'], 'demo_user')
+        self.assertEqual(data['role'], 'User')

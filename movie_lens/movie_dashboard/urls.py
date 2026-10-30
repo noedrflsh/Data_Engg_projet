@@ -5,6 +5,14 @@ urlpatterns = [
     # Dashboard View
     path('', views.dashboard_view, name='dashboard'),
 
+    # Authentication
+    path('login/',    views.login_view,    name='login'),
+    path('logout/',   views.logout_view,   name='logout'),
+    path('register/', views.register_view, name='register'),
+
+    # Current User API (for frontend RBAC display)
+    path('api/user/me/', views.api_current_user, name='api_current_user'),
+
     # Autocomplete & Details
     path('api/movies/search/', views.api_search_movies, name='api_search_movies'),
     path('api/movies/details/', views.api_movie_details, name='api_movie_details'),
@@ -18,6 +26,6 @@ urlpatterns = [
     path('api/analytics/dominant-genre/', views.api_dominant_genre, name='api_dominant_genre'),
     path('api/analytics/genre-coverage/', views.api_genre_coverage, name='api_genre_coverage'),
 
-    # Problem 4: User Rating Interaction
+    # Problem 4: User Rating Interaction (login required)
     path('api/ratings/rate/', views.api_submit_rating, name='api_submit_rating'),
 ]

@@ -1,14 +1,66 @@
 import json
 import time
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib import messages
 from .services import analytics
 
 
 def dashboard_view(request):
     """Renders the executive OLAP analytics dashboard."""
     return render(request, 'dashboard.html')
+
+
+# -------------------------------------------------------------
+# Authentication Views
+# -------------------------------------------------------------
+
+def login_view(request):
+    """User login page."""
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            messages.success(request, f'Welcome back, {user.username}!')
+            next_url = request.POST.get('next') or request.GET.get('next') or '/'
+            return redirect(next_url)
+        else:
+            messages.error(request, 'Invalid username or password.')
+    else:
+        form = AuthenticationForm()
+    return render(request, 'registration/login.html', {'form': form, 'next': request.GET.get('next', '/')})
+
+
+def logout_view(request):
+    """Logs out the current user and redirects to login."""
+    logout(request)
+    messages.info(request, 'You have been logged out successfully.')
+    return redirect('login')
+
+
+def register_view(request):
+    """User registration page — creates a standard (non-staff) user."""
+    if request.user.is_authenticated:
+        return redirect('dashboard')
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_staff = False       # Standard user — no admin access
+            user.is_superuser = False
+            user.save()
+            login(request, user)
+            messages.success(request, f'Account created! Welcome, {user.username}.')
+            return redirect('dashboard')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/register.html', {'form': form})
 
 
 # -------------------------------------------------------------
@@ -176,8 +228,11 @@ def api_genre_coverage(request):
 def api_submit_rating(request):
     """
     Problem 4: Users are allowed to modify only the rating of movies.
+    Requires authentication — returns JSON 401 if not logged in.
     Accepts JSON: { "movie_id": <int>, "rating": <float 0.5-5.0> }
     """
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required. Please log in to rate movies.', 'login_url': '/login/'}, status=401)
     if request.method != 'POST':
         return JsonResponse({'error': 'POST method required'}, status=405)
 
@@ -191,7 +246,7 @@ def api_submit_rating(request):
     if rating < 0.5 or rating > 5.0 or (round(rating * 2) != rating * 2):
         return JsonResponse({'error': 'Rating must be between 0.5 and 5.0 in 0.5 increments'}, status=400)
 
-    user_id = request.user.id if request.user.is_authenticated else 1
+    user_id = request.user.id
     result = analytics.upsert_user_rating(user_id=user_id, movie_id=movie_id, rating=rating)
     return JsonResponse({
         'success': True,
@@ -199,5 +254,19 @@ def api_submit_rating(request):
         'movie_id': movie_id,
         'rating': rating,
         'user_id': user_id,
-        'message': f"Rating successfully {result['action']} to {rating}★"
+        'username': request.user.username,
+        'role': 'Administrator' if request.user.is_staff else 'User',
+        'message': f"Rating of {rating}★ successfully {result['action']} in database!"
     })
+
+
+def api_current_user(request):
+    """Returns current logged-in user info for the dashboard UI."""
+    if request.user.is_authenticated:
+        return JsonResponse({
+            'authenticated': True,
+            'username': request.user.username,
+            'role': 'Administrator' if request.user.is_staff else 'User',
+            'is_staff': request.user.is_staff,
+        })
+    return JsonResponse({'authenticated': False, 'username': None, 'role': 'Guest', 'is_staff': False})

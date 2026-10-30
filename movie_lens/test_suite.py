@@ -13,12 +13,16 @@ import django
 django.setup()
 
 from django.test import Client
+from django.contrib.auth.models import User
 
 
 class MovieLensIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.client = Client()
+        # Ensure demo_user exists for authenticated tests
+        if not User.objects.filter(username='demo_user').exists():
+            User.objects.create_user(username='demo_user', password='movielens2024', is_staff=False)
 
     def test_01_dashboard_root(self):
         """Verify HTML dashboard loads successfully."""
@@ -112,13 +116,47 @@ class MovieLensIntegrationTests(unittest.TestCase):
         self.assertGreater(len(data['coverage']), 0)
 
     def test_12_problem_4_rating_submission(self):
-        """Problem 4: Rate movie / modify existing rating."""
+        """Problem 4: Rate movie / modify existing rating with auth enforcement."""
         payload = {'movie_id': 1, 'rating': 4.5}
+
+        # 1. Unauthenticated request should be rejected (HTTP 401)
+        self.client.logout()
+        res = self.client.post('/api/ratings/rate/', data=json.dumps(payload), content_type='application/json')
+        self.assertEqual(res.status_code, 401)
+        data = json.loads(res.content)
+        self.assertIn('error', data)
+
+        # 2. Authenticated user can rate/modify
+        logged_in = self.client.login(username='demo_user', password='movielens2024')
+        self.assertTrue(logged_in)
+
         res = self.client.post('/api/ratings/rate/', data=json.dumps(payload), content_type='application/json')
         self.assertEqual(res.status_code, 200)
         data = json.loads(res.content)
         self.assertTrue(data['success'])
         self.assertEqual(data['rating'], 4.5)
+        self.assertEqual(data['username'], 'demo_user')
+
+    def test_13_authentication_endpoints(self):
+        """Verify login, register, and current user info endpoints."""
+        self.client.logout()
+
+        # Test login page GET for guest
+        res = self.client.get('/login/')
+        self.assertEqual(res.status_code, 200)
+
+        # Test register page GET for guest
+        res = self.client.get('/register/')
+        self.assertEqual(res.status_code, 200)
+
+        # Test current user endpoint
+        self.client.login(username='demo_user', password='movielens2024')
+        res = self.client.get('/api/user/me/')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.content)
+        self.assertTrue(data['authenticated'])
+        self.assertEqual(data['username'], 'demo_user')
+        self.assertEqual(data['role'], 'User')
 
 
 if __name__ == '__main__':
@@ -129,7 +167,7 @@ if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(MovieLensIntegrationTests)
     result = runner.run(suite)
     if result.wasSuccessful():
-        print('\n All 12 integration tests passed with 100% success!')
+        print('\n All 13 integration tests passed with 100% success!')
         sys.exit(0)
     else:
         print('\n Tests encountered failures.')

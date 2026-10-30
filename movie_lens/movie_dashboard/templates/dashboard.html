@@ -284,6 +284,23 @@
                     <span>Latency: <strong id="globalLatency">- ms</strong></span>
                 </div>
             </div>
+
+            <!-- User Auth Badge -->
+            <div class="d-flex align-items-center gap-2">
+                <span class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded-2"
+                      id="userBadge"
+                      style="background: rgba(100,116,139,0.15); border: 1px solid #1f293d; font-size: 0.78rem;">
+                    <i class="ti ti-user-circle text-secondary"></i>
+                    <span id="usernameLabel" class="text-secondary">...</span>
+                    <span id="roleLabel" class="ms-1" style="font-size:0.68rem; font-weight:600; padding:2px 6px; border-radius:4px;"></span>
+                </span>
+                <a id="logoutBtn" href="/logout/" class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem; padding: 4px 10px; display:none;">
+                    <i class="ti ti-logout me-1"></i>Logout
+                </a>
+                <a id="loginBtn" href="/login/" class="btn btn-sm btn-primary" style="font-size:0.78rem; padding: 4px 10px; display:none;">
+                    <i class="ti ti-login me-1"></i>Login
+                </a>
+            </div>
         </div>
     </header>
 
@@ -1076,7 +1093,19 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ movie_id: activeMovieId, rating: activeRating })
                 });
+                // If redirected to login page (HTML), user is not logged in
+                const contentType = res.headers.get('content-type') || '';
+                if (res.status === 302 || !contentType.includes('application/json')) {
+                    alertBox.className = 'mt-2 text-center small font-mono text-warning';
+                    alertBox.innerHTML = '🔒 You must be logged in. <a href="/login/" class="text-warning">Click here to login</a>.';
+                    return;
+                }
                 const data = await res.json();
+                if (res.status === 401 || data.login_url) {
+                    alertBox.className = 'mt-2 text-center small font-mono text-warning';
+                    alertBox.innerHTML = `🔒 ${data.error} <a href="/login/" class="text-warning fw-bold">Login here</a>.`;
+                    return;
+                }
                 if (data.success) {
                     alertBox.className = 'mt-2 text-center small font-mono text-success';
                     alertBox.textContent = `✓ Rating of ${activeRating}★ recorded in database!`;
@@ -1113,6 +1142,45 @@
         // Initialize Everything on DOM Load
         window.addEventListener('DOMContentLoaded', async () => {
             const t0 = performance.now();
+
+            // Load current user info for RBAC display
+            try {
+                const userRes = await fetch('/api/user/me/');
+                const userInfo = await userRes.json();
+                const usernameLabel = document.getElementById('usernameLabel');
+                const roleLabel = document.getElementById('roleLabel');
+                const logoutBtn = document.getElementById('logoutBtn');
+                const loginBtn = document.getElementById('loginBtn');
+
+                if (userInfo.authenticated) {
+                    usernameLabel.textContent = userInfo.username;
+                    if (userInfo.is_staff) {
+                        roleLabel.textContent = 'ADMIN';
+                        roleLabel.style.background = 'rgba(248,113,113,0.15)';
+                        roleLabel.style.color = '#f87171';
+                    } else {
+                        roleLabel.textContent = 'USER';
+                        roleLabel.style.background = 'rgba(52,211,153,0.15)';
+                        roleLabel.style.color = '#34d399';
+                    }
+                    logoutBtn.style.display = 'inline-flex';
+                } else {
+                    usernameLabel.textContent = 'Guest';
+                    roleLabel.textContent = 'NOT LOGGED IN';
+                    roleLabel.style.background = 'rgba(100,116,139,0.2)';
+                    roleLabel.style.color = '#94a3b8';
+                    loginBtn.style.display = 'inline-flex';
+
+                    // Disable rating button for guests
+                    const rateBtn = document.getElementById('btnSaveRating');
+                    if (rateBtn) {
+                        rateBtn.disabled = true;
+                        rateBtn.title = 'Please log in to rate movies';
+                        rateBtn.textContent = '🔒 Login to Rate';
+                    }
+                }
+            } catch (e) { console.warn('Could not load user info', e); }
+
             await Promise.all([
                 loadMovieDetails(1),
                 loadMovieTags(1),
