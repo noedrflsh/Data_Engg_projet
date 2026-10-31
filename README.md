@@ -1,8 +1,6 @@
 # 🎬 MovieLens 32M OLAP Intelligence & Analytics Engine
 
-> **Course**: DS5003 Data Engineering Lab  
-> **Instructor**: Dr. Koninika Pal &bull; **Institution**: IIT Palakkad  
-> **Dataset**: MovieLens 32M (`ml-32m`) &bull; **Engine**: PostgreSQL 16 + Django 6.1 + Chart.js 4.4  
+
 
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Django](https://img.shields.io/badge/Django-6.1-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
@@ -258,5 +256,3 @@ OK - All 12 integration tests passed with 100% success!
 
 ---
 
-## 👥 Contributors & Course Context
-Developed as part of the **DS5003 Data Engineering Lab** under the guidance of **Dr. Koninika Pal**, Department of Data Science, **IIT Palakkad**.
