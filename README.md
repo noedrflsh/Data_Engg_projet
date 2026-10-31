@@ -12,6 +12,15 @@
 
 ---
 
+> [!IMPORTANT]
+> **🚀 First Time Starting the Web App?**  
+> For complete, beginner-friendly instructions on creating the PostgreSQL database, streaming the 32M records, and starting the web app without errors, see **[`HOW_TO_START.md`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/HOW_TO_START.md)** or run the automated script:
+> ```bash
+> ./setup_database.sh
+> ```
+
+---
+
 ## 📌 Executive Summary
 
 This project implements an end-to-end **Data Engineering OLAP (Online Analytical Processing) platform** built over the MovieLens 32M dataset (**32,000,204 ratings**, **2,000,048 user tags**, and **87,585 movies**). 
@@ -163,11 +172,17 @@ We addressed this through a two-tier optimization strategy:
 
 ## 🚀 Quickstart & Setup Guide
 
-### Prerequisites
-- Python 3.10+
-- PostgreSQL 14+ running locally on port 5432
+> [!TIP]
+> **Detailed Guide**: For a beginner-friendly walkthrough explaining database setup, permissions, and troubleshooting, see **[`HOW_TO_START.md`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/HOW_TO_START.md)**.
 
-### 1. Clone & Set Up Environment
+### Option A: Automated 1-Click Setup (Linux / macOS)
+```bash
+./setup_database.sh
+```
+
+### Option B: Manual Setup
+
+#### 1. Clone & Set Up Environment
 ```bash
 git clone <repo-url>
 cd Data_Engg_projet
@@ -176,20 +191,37 @@ source .venv/bin/activate
 pip install -r movie_lens/requirements.txt
 ```
 
-### 2. Configure Database & Execute Optimization
+#### 2. Create PostgreSQL User & Database
 ```bash
-# Verify credentials in movie_lens/movie_lens_dashboard/settings.py
-cd movie_lens
-psql -U carpenter -d movie_lens -f optimize.sql
+# Create user 'gumbo' and database 'movie_lens' (default credentials)
+sudo -u postgres psql -c "CREATE USER gumbo WITH PASSWORD '2836' SUPERUSER;"
+sudo -u postgres psql -c "CREATE DATABASE movie_lens OWNER gumbo;"
 ```
 
-### 3. Run Automated Integration Test Suite
+#### 3. Initialize Schema, Ingest 32M Rows & Build Indexes
+```bash
+cd movie_lens
+
+# 1. Create tables
+PGPASSWORD=2836 psql -h localhost -U gumbo -d movie_lens -f schema.sql
+
+# 2. Ingest CSVs (Ensure ml-32m/ folder exists)
+python etl_pipeline.py
+
+# 3. Create covering indexes & materialized views
+PGPASSWORD=2836 psql -h localhost -U gumbo -d movie_lens -f optimize.sql
+
+# 4. Apply Django internal auth migrations
+python manage.py migrate
+```
+
+#### 4. Run Automated Integration Test Suite
 ```bash
 python test_suite.py
 ```
-*Output: All 12 integration tests pass in ~0.2s.*
+*Output: All 13 integration tests pass in ~0.2s.*
 
-### 4. Launch Django Development Server
+#### 5. Launch Django Development Server
 ```bash
 python manage.py runserver 127.0.0.1:8000
 ```
