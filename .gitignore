@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Large Datasets / Raw files
+movie_lens/ml-32m.zip
+movie_lens/ml-32m/
+*.zip
+*.tar.gz
+
+# Django local / logs
+*.log
+local_settings.py
+.env
+*.env
+db.sqlite3
+db.sqlite3-journal
+architecture_diagrams.html
+
+COMPLETE_DEVELOPER_GUIDE
+project_description-1.md
+PROJECT_OVERVIEW.md
+complete_developer_guidelines.md
