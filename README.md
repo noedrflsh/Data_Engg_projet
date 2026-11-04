@@ -1,36 +1,36 @@
-# 🎬 MovieLens 32M OLAP Intelligence & Analytics Engine
+# MovieLens OLAP Engine
 
 
 
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https:/www.postgresql.org/)
 [![Django](https://img.shields.io/badge/Django-6.1-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-12%2F12%20Passed-10b981)](https://github.com/)
-[![Latency](https://img.shields.io/badge/Avg%20Query%20Latency-%3C%2020ms-blue)](https://github.com/)
+<!--[![Latency](https://img.shields.io/badge/Avg%20Query%20Latency-%3C%2020ms-blue)](https://github.com/)-->
+<!--[![Tests](https://img.shields.io/badge/Tests-12%2F12%20Passed-10b981)](https://github.com/)-->
 
 ---
 
-> [!IMPORTANT]
-> **🚀 First Time Starting the Web App?**  
-> For complete, beginner-friendly instructions on creating the PostgreSQL database, streaming the 32M records, and starting the web app without errors, see **[`HOW_TO_START.md`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/HOW_TO_START.md)** or run the automated script:
+> [!Useful]
+> **Automated Script**  
+> For a complete guide on creating the PostgreSQL database, streaming the 32M records and starting the web app without errors - see **[`HOW_TO_START.md`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/HOW_TO_START.md)** 
+> To run the automated script to handle everything:
 > ```bash
 > ./setup_database.sh
 > ```
 
 ---
 
-## 📌 Executive Summary
+## Summary
 
-This project implements an end-to-end **Data Engineering OLAP (Online Analytical Processing) platform** built over the MovieLens 32M dataset (**32,000,204 ratings**, **2,000,048 user tags**, and **87,585 movies**). 
+This project implements an end-to-end Data Engineering OLAP platform built on the MovieLens 32M dataset (**32,000,204 ratings**, **2,000,048 user tags**, and **87,585 movies**). 
 
-The platform addresses raw data anomalies through **Third Normal Form (3NF) relational dimensional modeling**, achieves high-speed data ingestion via **Psycopg 3 `COPY` streaming**, optimizes query latency from **~18 seconds down to sub-36 milliseconds** using covering B-Tree indexes and PostgreSQL materialized views, and exposes a high-performance **REST API** powering an executive analytics dashboard with role-based access control (RBAC).
+The database is in **Third Normal Form (3NF) relational dimensional modeling**. It achieves high-speed data ingestion via **Psycopg 3 `COPY` streaming**. It optimizes query latency from ~18 seconds down to sub-36 milliseconds using covering B-Tree indexes and PostgreSQL materialized views. **REST API** powering an executive analytics dashboard with role-based access control (RBAC).
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
-> [!TIP]
-> **Interactive Architecture & ER Diagrams**: Open **[`architecture_diagram.html`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/architecture_diagram.html)** in any browser to interactively switch between the **Database ER Diagram** and the **Full-Stack Flow Diagram** with zoom controls!
+> **Interactive Architecture & ER Diagrams**: Open **[`architecture_diagram.html`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/architecture_diagram.html)** in any browser to interactively switch between the **Database ER Diagram** and the **Full-Stack Flow Diagram**
 
 ```mermaid
 flowchart TD

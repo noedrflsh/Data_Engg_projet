@@ -1,4 +1,4 @@
-# 📖 The Master Data Engineering Guide: Complete Architecture & Code Walkthrough Manual
+# Architecture & Code Walkthrough
 
 > **Course**: DS5003 Data Engineering Lab &bull; IIT Palakkad  
 > **Project**: MovieLens 32M OLAP Intelligence & Analytics Platform  
