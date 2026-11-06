@@ -158,6 +158,21 @@ class MovieLensIntegrationTests(unittest.TestCase):
         self.assertEqual(data['username'], 'demo_user')
         self.assertEqual(data['role'], 'User')
 
+    def test_14_available_years(self):
+        """Verify dynamic release years endpoint returns sorted descending list of years."""
+        res = self.client.get('/api/analytics/available-years/')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.content)
+        self.assertIn('years', data)
+        years = data['years']
+        self.assertGreater(len(years), 100)
+        # Ensure descending sort
+        self.assertEqual(years, sorted(years, reverse=True))
+        # Ensure known years are present
+        self.assertIn(2023, years)
+        self.assertIn(1995, years)
+        self.assertIn(1874, years)
+
 
 if __name__ == '__main__':
     print('======================================================================')
@@ -167,7 +182,7 @@ if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(MovieLensIntegrationTests)
     result = runner.run(suite)
     if result.wasSuccessful():
-        print('\n All 13 integration tests passed with 100% success!')
+        print('\n All integration tests passed with 100% success!')
         sys.exit(0)
     else:
         print('\n Tests encountered failures.')

@@ -328,3 +328,18 @@ def upsert_user_rating(user_id: int, movie_id: int, rating: float):
             'date_key': date_key
         }
 
+
+def get_available_years():
+    """
+    Returns all distinct release years present in the catalog in descending order.
+    """
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT DISTINCT release_year 
+            FROM dim_movies 
+            WHERE release_year IS NOT NULL 
+            ORDER BY release_year DESC;
+        """)
+        return [int(r[0]) for r in cur.fetchall()]
+
+
