@@ -70,8 +70,6 @@ def register_view(request):
 def api_search_movies(request):
     """Autocomplete search endpoint matching movies by title prefix/substring."""
     query = request.GET.get('q', '').strip()
-    if not query:
-        return JsonResponse({'results': []})
     limit = int(request.GET.get('limit', 10))
     results = analytics.search_movies(query, limit=limit)
     return JsonResponse({'results': results})

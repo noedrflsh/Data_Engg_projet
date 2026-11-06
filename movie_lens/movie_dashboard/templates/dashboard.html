@@ -208,6 +208,22 @@
             color: var(--accent-indigo);
             font-weight: 600;
         }
+        .movie-icon-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            color: #475569;
+            flex-shrink: 0;
+            transition: background 0.15s ease, color 0.15s ease;
+        }
+        .search-item:hover .movie-icon-box, .search-item.highlighted .movie-icon-box {
+            background: #eef2ff;
+            color: var(--accent-indigo);
+        }
 
         /* Interactive Star Rating */
         .star-box {
@@ -371,21 +387,23 @@
         <!-- ========================================================= -->
         <section class="panel p-3 mb-4">
             <div class="row g-3 align-items-center">
-                <!-- Movie Search Autocomplete -->
+                <!-- Movie Search Autocomplete (Polished) -->
                 <div class="col-lg-5 col-md-6 position-relative">
-                    <label class="form-label text-secondary small mb-1 fw-medium">
-                        <i class="ti ti-search me-1"></i>Search Movie (Questions 3a, 3d & Rating):
+                    <label class="form-label text-secondary small mb-1 fw-medium d-flex justify-content-between align-items-center">
+                        <span><i class="ti ti-search me-1"></i>Search Movie (Questions 3a, 3d & Rating):</span>
+                        <span class="text-muted small font-mono d-none d-sm-inline">Press <kbd class="bg-light text-secondary border px-1" style="font-size: 0.72rem;">/</kbd></span>
                     </label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-secondary">
-                            <i class="ti ti-film"></i>
+                        <span class="input-group-text bg-light border-end-0 text-secondary" id="searchIconBox">
+                            <i class="ti ti-film" id="searchStaticIcon"></i>
+                            <div class="spinner-border spinner-border-sm text-primary d-none" id="searchSpinner" role="status" style="width: 1rem; height: 1rem;"></div>
                         </span>
-                        <input type="text" id="movieSearchInput" class="form-control border-start-0" placeholder="Type title (e.g. Shawshank, Inception, Matrix, Pulp Fiction)..." autocomplete="off" value="Toy Story">
-                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch">
+                        <input type="text" id="movieSearchInput" class="form-control border-start-0 border-end-0" placeholder="Search 87k+ movies by title (e.g. Shawshank, Inception)..." autocomplete="off" value="">
+                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch" title="Clear search" style="display: none;">
                             <i class="ti ti-x"></i>
                         </button>
                     </div>
-                    <div id="searchDropdown" class="search-results-dropdown" style="display: none;"></div>
+                    <div id="searchDropdown" class="search-results-dropdown shadow-lg" style="display: none; max-height: 380px;"></div>
                 </div>
 
                 <!-- Global Year Filter (Searchable Autocomplete) -->
@@ -1087,64 +1105,240 @@
         }
 
         // =============================================================
-        // 9. Autocomplete Search Logic
+        // 9. Redesigned Autocomplete Movie Search Logic
         // =============================================================
         let searchDebounce;
+        let highlightedMovieIdx = -1;
+        let currentSearchResults = [];
+
         const searchInput = document.getElementById('movieSearchInput');
         const searchDropdown = document.getElementById('searchDropdown');
+        const btnClearSearch = document.getElementById('btnClearSearch');
+        const searchSpinner = document.getElementById('searchSpinner');
+        const searchStaticIcon = document.getElementById('searchStaticIcon');
 
-        searchInput.addEventListener('input', () => {
-            clearTimeout(searchDebounce);
-            const q = searchInput.value.trim();
-            if (q.length < 2) {
-                searchDropdown.style.display = 'none';
-                return;
-            }
-            searchDebounce = setTimeout(async () => {
-                try {
-                    const res = await fetch(`/api/movies/search/?q=${encodeURIComponent(q)}`);
-                    const data = await res.json();
-                    const results = data.results || [];
-                    searchDropdown.innerHTML = '';
-                    if (results.length === 0) {
-                        searchDropdown.innerHTML = '<div class="p-3 text-secondary small">No matching movies found</div>';
-                    } else {
-                        results.forEach(m => {
-                            const div = document.createElement('div');
-                            div.className = 'search-item';
-                            div.innerHTML = `
-                                <div>
-                                    <span class="text-dark fw-medium">${m.title}</span>
-                                    <small class="text-secondary ms-1">(${m.release_year || 'N/A'})</small>
-                                </div>
-                                <span class="badge bg-light text-secondary font-mono border">#${m.movie_id}</span>
-                            `;
-                            div.onclick = () => selectMovie(m.movie_id, m.title);
-                            searchDropdown.appendChild(div);
-                        });
-                    }
-                    searchDropdown.style.display = 'block';
-                } catch (e) {
-                    console.error("Autocomplete failure:", e);
+        function setSearchLoading(isLoading) {
+            if (searchSpinner && searchStaticIcon) {
+                if (isLoading) {
+                    searchSpinner.classList.remove('d-none');
+                    searchStaticIcon.classList.add('d-none');
+                } else {
+                    searchSpinner.classList.add('d-none');
+                    searchStaticIcon.classList.remove('d-none');
                 }
-            }, 250);
+            }
+        }
+
+        function updateClearBtn() {
+            if (btnClearSearch && searchInput) {
+                btnClearSearch.style.display = searchInput.value.length > 0 ? 'inline-block' : 'none';
+            }
+        }
+
+        function renderSearchResults(results, queryStr = '', isBenchmark = false) {
+            currentSearchResults = results;
+            highlightedMovieIdx = -1;
+            searchDropdown.innerHTML = '';
+
+            if (results.length === 0) {
+                searchDropdown.innerHTML = `
+                    <div class="p-4 text-center text-secondary">
+                        <i class="ti ti-movie-off fs-2 text-muted d-block mb-1"></i>
+                        <div class="fw-semibold text-dark">No movies found</div>
+                        <small class="text-muted">No title matches "${queryStr}". Try another title or genre keyword.</small>
+                    </div>
+                `;
+            } else {
+                // Section Header
+                const header = document.createElement('div');
+                header.className = 'px-3 py-2 text-uppercase text-secondary small fw-bold bg-light border-bottom d-flex justify-content-between align-items-center';
+                if (isBenchmark) {
+                    header.innerHTML = `<span><i class="ti ti-sparkles text-primary me-1"></i>Suggested Benchmarks</span><span class="text-muted font-mono" style="font-size: 0.75rem;">Fast Pick</span>`;
+                } else {
+                    header.innerHTML = `<span><i class="ti ti-search me-1"></i>Matching Movies</span><span class="text-muted font-mono" style="font-size: 0.75rem;">${results.length} found</span>`;
+                }
+                searchDropdown.appendChild(header);
+
+                // Result Items
+                results.forEach((m, idx) => {
+                    const isCurrent = (m.movie_id === activeMovieId);
+                    const div = document.createElement('div');
+                    div.className = `search-item ${isCurrent ? 'active-item' : ''}`;
+                    div.dataset.index = idx;
+                    div.dataset.id = m.movie_id;
+
+                    const genreBadges = m.genres
+                        ? m.genres.split(',').slice(0, 3).map(g => `<span class="badge bg-light text-secondary border me-1" style="font-size: 0.72rem;">${g.trim()}</span>`).join('')
+                        : '';
+
+                    const ratingBadge = m.avg_rating
+                        ? `<span class="badge border font-mono fw-semibold" style="background: #fffbeb; color: #b45309; border-color: #fde68a !important;"><i class="ti ti-star-filled text-warning me-1"></i>${m.avg_rating.toFixed(2)}</span>`
+                        : '';
+
+                    div.innerHTML = `
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="movie-icon-box">
+                                <i class="ti ti-movie fs-5"></i>
+                            </div>
+                            <div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-dark fw-semibold">${m.title}</span>
+                                    <span class="text-secondary small font-mono">(${m.release_year || 'N/A'})</span>
+                                    ${isCurrent ? '<span class="badge bg-primary text-white" style="font-size: 0.68rem;">Active</span>' : ''}
+                                </div>
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    ${genreBadges}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            ${ratingBadge}
+                            <span class="text-muted small d-block font-mono mt-1">#${m.movie_id}</span>
+                        </div>
+                    `;
+
+                    div.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        selectMovie(m.movie_id, m.title);
+                    });
+                    searchDropdown.appendChild(div);
+                });
+            }
+
+            searchDropdown.style.display = 'block';
+        }
+
+        async function fetchMovies(query = '') {
+            const q = query.trim();
+            const isBenchmark = !q;
+            setSearchLoading(true);
+            try {
+                const res = await fetch(`/api/movies/search/?q=${encodeURIComponent(q)}`);
+                const data = await res.json();
+                renderSearchResults(data.results || [], q, isBenchmark);
+            } catch (err) {
+                console.error("Autocomplete search failure:", err);
+            } finally {
+                setSearchLoading(false);
+            }
+        }
+
+        function highlightMovieItem(items, index) {
+            items.forEach((item, idx) => {
+                if (idx === index) {
+                    item.classList.add('highlighted');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('highlighted');
+                }
+            });
+        }
+
+        // Search Input Events
+        if (searchInput) {
+            // Focus: show suggestions immediately
+            searchInput.addEventListener('focus', () => {
+                fetchMovies(searchInput.value);
+            });
+
+            // Live Input Debounce
+            searchInput.addEventListener('input', () => {
+                updateClearBtn();
+                clearTimeout(searchDebounce);
+                searchDebounce = setTimeout(() => {
+                    fetchMovies(searchInput.value);
+                }, 200);
+            });
+
+            // Keyboard Navigation (Arrow keys, Enter, Esc)
+            searchInput.addEventListener('keydown', (e) => {
+                const items = searchDropdown.querySelectorAll('.search-item');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (searchDropdown.style.display === 'none') {
+                        fetchMovies(searchInput.value);
+                        return;
+                    }
+                    if (items.length > 0) {
+                        highlightedMovieIdx = (highlightedMovieIdx + 1) % items.length;
+                        highlightMovieItem(items, highlightedMovieIdx);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (items.length > 0) {
+                        highlightedMovieIdx = (highlightedMovieIdx - 1 + items.length) % items.length;
+                        highlightMovieItem(items, highlightedMovieIdx);
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (highlightedMovieIdx >= 0 && currentSearchResults[highlightedMovieIdx]) {
+                        const m = currentSearchResults[highlightedMovieIdx];
+                        selectMovie(m.movie_id, m.title);
+                    } else if (currentSearchResults.length > 0) {
+                        const m = currentSearchResults[0];
+                        selectMovie(m.movie_id, m.title);
+                    }
+                } else if (e.key === 'Escape') {
+                    searchDropdown.style.display = 'none';
+                    highlightedMovieIdx = -1;
+                }
+            });
+
+            searchInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    searchDropdown.style.display = 'none';
+                    highlightedMovieIdx = -1;
+                }, 150);
+            });
+        }
+
+        // Global Shortcut: '/' to focus search input
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                e.preventDefault();
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            }
         });
 
-        document.getElementById('btnClearSearch').addEventListener('click', () => {
-            searchInput.value = '';
-            searchDropdown.style.display = 'none';
-        });
+        // Clear button
+        if (btnClearSearch) {
+            btnClearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                updateClearBtn();
+                searchInput.focus();
+                fetchMovies('');
+            });
+        }
 
+        // Click outside closes dropdown
         document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target) && !btnClearSearch.contains(e.target)) {
                 searchDropdown.style.display = 'none';
+                highlightedMovieIdx = -1;
             }
         });
 
         function selectMovie(id, title) {
             activeMovieId = id;
-            searchInput.value = title;
-            searchDropdown.style.display = 'none';
+            if (searchInput) {
+                searchInput.value = title;
+                updateClearBtn();
+            }
+            if (searchDropdown) {
+                searchDropdown.style.display = 'none';
+                highlightedMovieIdx = -1;
+            }
+
+            // Visual feedback pulse on the Hero Title
+            const heroTitle = document.getElementById('movieHeroTitle');
+            if (heroTitle) {
+                heroTitle.classList.add('text-primary');
+                setTimeout(() => heroTitle.classList.remove('text-primary'), 400);
+            }
+
             loadMovieDetails(id);
             loadMovieTags(id);
             loadRatingDistribution(id);
