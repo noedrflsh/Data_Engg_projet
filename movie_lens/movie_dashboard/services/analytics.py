@@ -226,21 +226,48 @@ def get_genre_coverage():
 
 def search_movies(query_str: str, limit: int = 10):
     """
-    Helper for Autocomplete Search: Lookup movies by
-    title.
+    Helper for Autocomplete Search: Lookup movies by title.
+    Returns movie_id, title, release_year, genres, and avg_rating.
+    If query is empty, returns benchmark popular movies.
     """
     with connection.cursor() as cur:
-        cur.execute("""
-            SELECT movie_id, title, release_year
-            FROM dim_movies
-            WHERE title ILIKE %s
-            ORDER BY release_year DESC NULLS LAST,
-            movie_id ASC
-            LIMIT %s;
-        """, [f"%{query_str}%", limit])
+        query_clean = (query_str or '').strip()
+        if not query_clean:
+            cur.execute("""
+                SELECT m.movie_id, m.title, m.release_year,
+                       COALESCE(string_agg(g.genre_name, ', '), '') AS genres,
+                       s.avg_rating
+                FROM dim_movies m
+                LEFT JOIN bridge_movie_genre b ON m.movie_id = b.movie_id
+                LEFT JOIN dim_genres g ON b.genre_id = g.genre_id
+                LEFT JOIN mv_movie_rating_stats s ON m.movie_id = s.movie_id
+                WHERE m.movie_id IN (1, 318, 2571, 79132, 296, 260, 527)
+                GROUP BY m.movie_id, m.title, m.release_year, s.avg_rating
+                ORDER BY s.avg_rating DESC NULLS LAST
+                LIMIT %s;
+            """, [limit])
+        else:
+            cur.execute("""
+                SELECT m.movie_id, m.title, m.release_year,
+                       COALESCE(string_agg(g.genre_name, ', '), '') AS genres,
+                       s.avg_rating
+                FROM dim_movies m
+                LEFT JOIN bridge_movie_genre b ON m.movie_id = b.movie_id
+                LEFT JOIN dim_genres g ON b.genre_id = g.genre_id
+                LEFT JOIN mv_movie_rating_stats s ON m.movie_id = s.movie_id
+                WHERE m.title ILIKE %s
+                GROUP BY m.movie_id, m.title, m.release_year, s.avg_rating
+                ORDER BY s.avg_rating DESC NULLS LAST, m.release_year DESC NULLS LAST, m.movie_id ASC
+                LIMIT %s;
+            """, [f"%{query_clean}%", limit])
         rows = cur.fetchall()
-        return [{'movie_id': r[0], 'title': r[1],
-            'release_year': r[2]} for r in rows]
+        return [{
+            'movie_id': r[0],
+            'title': r[1],
+            'release_year': r[2],
+            'genres': r[3],
+            'avg_rating': float(r[4]) if r[4] is not None else None
+        } for r in rows]
 
 
 def get_movie_details(movie_id: int):
