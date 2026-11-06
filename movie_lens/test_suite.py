@@ -137,6 +137,21 @@ class MovieLensIntegrationTests(unittest.TestCase):
         self.assertEqual(data['rating'], 4.5)
         self.assertEqual(data['username'], 'demo_user')
 
+        # 3. Verify user's rating is persisted and returned in movie details
+        rate_2_5 = {'movie_id': 1, 'rating': 2.5}
+        res = self.client.post('/api/ratings/rate/', data=json.dumps(rate_2_5), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+
+        details_res = self.client.get('/api/movies/details/?movie_id=1')
+        self.assertEqual(details_res.status_code, 200)
+        details_data = json.loads(details_res.content)
+        self.assertEqual(details_data['user_rating'], 2.5)
+
+        my_rating_res = self.client.get('/api/ratings/my-rating/?movie_id=1')
+        self.assertEqual(my_rating_res.status_code, 200)
+        my_rating_data = json.loads(my_rating_res.content)
+        self.assertEqual(my_rating_data['user_rating'], 2.5)
+
     def test_13_authentication_endpoints(self):
         """Verify login, register, and current user info endpoints."""
         self.client.logout()

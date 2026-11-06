@@ -328,3 +328,18 @@ def upsert_user_rating(user_id: int, movie_id: int, rating: float):
             'date_key': date_key
         }
 
+
+def get_user_rating(user_id: int, movie_id: int):
+    """
+    Retrieves the rating given by a specific user for a movie.
+    Returns float rating (e.g. 2.5) or None if the user hasn't rated this movie.
+    """
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT rating FROM fact_ratings
+            WHERE user_id = %s AND movie_id = %s;
+        """, [user_id, movie_id])
+        row = cur.fetchone()
+        return float(row[0]) if row else None
+
+
