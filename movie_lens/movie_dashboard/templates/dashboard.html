@@ -526,21 +526,24 @@
                             <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="text-secondary small">Your Rating:</span>
-                                    <span class="fw-bold font-mono text-warning fs-5" id="userRatingLabel">4.5 ★</span>
+                                    <span class="fw-bold font-mono text-warning fs-5" id="userRatingLabel">Loading...</span>
                                 </div>
                                 <div class="text-center py-2">
-                                    <div class="star-box" id="interactiveStars">
-                                        <i class="ti ti-star-filled filled" data-val="1"></i>
-                                        <i class="ti ti-star-filled filled" data-val="2"></i>
-                                        <i class="ti ti-star-filled filled" data-val="3"></i>
-                                        <i class="ti ti-star-filled filled" data-val="4"></i>
-                                        <i class="ti ti-star-half-filled filled" data-val="4.5"></i>
+                                    <div class="star-box" id="interactiveStars" title="Click stars to rate">
+                                        <i class="ti ti-star" data-val="1"></i>
+                                        <i class="ti ti-star" data-val="2"></i>
+                                        <i class="ti ti-star" data-val="3"></i>
+                                        <i class="ti ti-star" data-val="4"></i>
+                                        <i class="ti ti-star" data-val="5"></i>
                                     </div>
                                 </div>
-                                <div class="d-flex justify-content-between text-secondary" style="font-size: 0.72rem;">
-                                    <span>0.5 Stars</span>
-                                    <span>2.5 Stars</span>
-                                    <span>5.0 Stars</span>
+                                <div class="mt-2">
+                                    <input type="range" class="form-range" id="ratingSlider" min="0.5" max="5.0" step="0.5" value="3.0" title="Slide to adjust rating">
+                                    <div class="d-flex justify-content-between text-secondary" style="font-size: 0.72rem;">
+                                        <span>0.5 ★</span>
+                                        <span>2.5 ★</span>
+                                        <span>5.0 ★</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -694,7 +697,7 @@
     <script>
         // Global State
         let activeMovieId = 1;
-        let activeRating = 4.5;
+        let activeRating = null;
         let activeYear = 2017;
         let cachedGenreTags = null;
         const charts = {};
@@ -752,6 +755,29 @@
                     span.textContent = g;
                     genresContainer.appendChild(span);
                 });
+
+                // Persisted User Rating Sync
+                const ratingSlider = document.getElementById('ratingSlider');
+                const alertBox = document.getElementById('ratingAlert');
+                if (d.user_rating !== null && d.user_rating !== undefined) {
+                    activeRating = parseFloat(d.user_rating);
+                    document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
+                    if (ratingSlider) ratingSlider.value = activeRating;
+                    updateStarVisuals(activeRating);
+                    if (alertBox) {
+                        alertBox.style.display = 'block';
+                        alertBox.className = 'mt-2 text-center small font-mono text-success';
+                        alertBox.textContent = `✓ Your rating: ${activeRating.toFixed(1)}★ in database`;
+                    }
+                } else {
+                    activeRating = 3.0;
+                    document.getElementById('userRatingLabel').textContent = 'Not rated yet';
+                    if (ratingSlider) ratingSlider.value = 3.0;
+                    updateStarVisuals(null);
+                    if (alertBox) {
+                        alertBox.style.display = 'none';
+                    }
+                }
             } catch (err) {
                 console.error("Failed to load movie details:", err);
             }
@@ -1137,18 +1163,37 @@
         // 10. Problem 4: Interactive Star Rating Handler
         // =============================================================
         const starIcons = document.querySelectorAll('#interactiveStars i');
+        const ratingSlider = document.getElementById('ratingSlider');
+
         starIcons.forEach(star => {
             star.addEventListener('click', () => {
-                activeRating = parseFloat(star.dataset.val);
+                const val = parseFloat(star.dataset.val);
+                // Toggle half-star if clicking same star again
+                if (activeRating === val) {
+                    activeRating = Math.max(0.5, val - 0.5);
+                } else {
+                    activeRating = val;
+                }
                 document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
+                if (ratingSlider) ratingSlider.value = activeRating;
                 updateStarVisuals(activeRating);
             });
         });
 
+        if (ratingSlider) {
+            ratingSlider.addEventListener('input', (e) => {
+                activeRating = parseFloat(e.target.value);
+                document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
+                updateStarVisuals(activeRating);
+            });
+        }
+
         function updateStarVisuals(rating) {
             starIcons.forEach(s => {
                 const val = parseFloat(s.dataset.val);
-                if (val <= rating) {
+                if (rating === null || rating === undefined || isNaN(rating)) {
+                    s.className = 'ti ti-star';
+                } else if (val <= rating) {
                     s.className = 'ti ti-star-filled filled';
                 } else if (val - 0.5 <= rating) {
                     s.className = 'ti ti-star-half-filled filled';

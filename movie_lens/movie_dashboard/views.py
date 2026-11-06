@@ -90,6 +90,13 @@ def api_movie_details(request):
     details = analytics.get_movie_details(movie_id)
     if not details:
         return JsonResponse({'error': 'Movie not found'}, status=404)
+
+    # Attach current user's rating if authenticated
+    if request.user.is_authenticated:
+        details['user_rating'] = analytics.get_user_rating(user_id=request.user.id, movie_id=movie_id)
+    else:
+        details['user_rating'] = None
+
     return JsonResponse(details)
 
 
@@ -281,3 +288,24 @@ def api_current_user(request):
             'is_staff': request.user.is_staff,
         })
     return JsonResponse({'authenticated': False, 'username': None, 'role': 'Guest', 'is_staff': False})
+
+
+def api_user_movie_rating(request):
+    """Returns the current logged-in user's rating for a specific movie."""
+    if not request.user.is_authenticated:
+        return JsonResponse({'authenticated': False, 'user_rating': None})
+    movie_id = request.GET.get('movie_id')
+    if not movie_id:
+        return JsonResponse({'error': 'movie_id is required'}, status=400)
+    try:
+        movie_id = int(movie_id)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid movie_id format'}, status=400)
+
+    user_rating = analytics.get_user_rating(user_id=request.user.id, movie_id=movie_id)
+    return JsonResponse({
+        'authenticated': True,
+        'movie_id': movie_id,
+        'user_rating': user_rating
+    })
+
