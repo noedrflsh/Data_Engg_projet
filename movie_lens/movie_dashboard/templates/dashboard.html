@@ -200,8 +200,13 @@
             transition: background 0.1s ease;
         }
         .search-item:last-child { border-bottom: none; }
-        .search-item:hover {
+        .search-item:hover, .search-item.highlighted {
             background: #f8fafc;
+        }
+        .search-item.active-item {
+            background: #eef2ff;
+            color: var(--accent-indigo);
+            font-weight: 600;
         }
 
         /* Interactive Star Rating */
@@ -383,24 +388,29 @@
                     <div id="searchDropdown" class="search-results-dropdown" style="display: none;"></div>
                 </div>
 
-                <!-- Global Year Filter -->
-                <div class="col-lg-3 col-md-3">
+                <!-- Global Year Filter (Searchable Autocomplete) -->
+                <div class="col-lg-3 col-md-3 position-relative">
                     <label class="form-label text-secondary small mb-1 fw-medium">
                         <i class="ti ti-calendar me-1"></i>Release Year Filter (Questions 3b, 3f):
                     </label>
-                    <select id="yearSelector" class="form-select font-mono">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-secondary">
+                            <i class="ti ti-calendar"></i>
+                        </span>
+                        <input type="text" id="yearSearchInput" class="form-control border-start-0 font-mono" placeholder="Type year or 'All'..." autocomplete="off" value="2017">
+                        <button class="btn btn-outline-secondary" type="button" id="btnClearYear" title="Reset to Overall (All-Time)">
+                            <i class="ti ti-x"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" type="button" id="btnToggleYearDropdown" title="Toggle years list">
+                            <i class="ti ti-chevron-down" id="yearDropdownIcon"></i>
+                        </button>
+                    </div>
+                    <!-- Hidden select for backward compatibility with tests/scripts -->
+                    <select id="yearSelector" style="display: none;">
                         <option value="">Overall (All-Time)</option>
-                        <option value="2019">2019</option>
-                        <option value="2018">2018</option>
                         <option value="2017" selected>2017</option>
-                        <option value="2016">2016</option>
-                        <option value="2015">2015</option>
-                        <option value="2010">2010</option>
-                        <option value="2005">2005</option>
-                        <option value="2000">2000</option>
-                        <option value="1995">1995</option>
-                        <option value="1994">1994</option>
                     </select>
+                    <div id="yearDropdown" class="search-results-dropdown" style="display: none;"></div>
                 </div>
 
                 <!-- Quick Pick Suggestions -->
@@ -918,6 +928,9 @@
                 if (data.dominant) {
                     document.getElementById('dominantGenreTitle').textContent = data.dominant.genre;
                     document.getElementById('dominantGenreCount').textContent = data.dominant.count.toLocaleString();
+                } else {
+                    document.getElementById('dominantGenreTitle').textContent = 'None';
+                    document.getElementById('dominantGenreCount').textContent = '0';
                 }
 
                 const allGenres = (data.all_genres || []).slice(0, 6);
@@ -1231,12 +1244,244 @@
             }
         });
 
-        // Year Selector Change
-        document.getElementById('yearSelector').addEventListener('change', (e) => {
-            activeYear = e.target.value;
+        // =============================================================
+        // Dynamic Release Year Searchable Autocomplete (Issue #2)
+        // =============================================================
+        let availableYears = [];
+        let highlightedYearIdx = -1;
+
+        const yearInput = document.getElementById('yearSearchInput');
+        const yearDropdown = document.getElementById('yearDropdown');
+        const btnToggleYear = document.getElementById('btnToggleYearDropdown');
+        const btnClearYear = document.getElementById('btnClearYear');
+        const yearDropdownIcon = document.getElementById('yearDropdownIcon');
+        const hiddenYearSelector = document.getElementById('yearSelector');
+
+        function renderYearDropdown(filterText = '') {
+            if (!yearDropdown) return;
+            const query = filterText.trim().toLowerCase();
+
+            // Filter options
+            const showAllTime = !query || 'overall'.includes(query) || 'all'.includes(query) || 'all-time'.includes(query);
+            let matches = [];
+            if (query && !showAllTime) {
+                matches = availableYears.filter(y => String(y).includes(query));
+            } else if (query && showAllTime) {
+                matches = availableYears.filter(y => String(y).includes(query));
+            } else {
+                matches = availableYears;
+            }
+
+            yearDropdown.innerHTML = '';
+
+            // 1. Overall (All-Time) option
+            if (showAllTime) {
+                const isAllSelected = !activeYear;
+                const allDiv = document.createElement('div');
+                allDiv.className = `search-item ${isAllSelected ? 'active-item' : ''}`;
+                allDiv.dataset.year = '';
+                allDiv.innerHTML = `
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="ti ti-infinity ${isAllSelected ? 'text-primary' : 'text-secondary'}"></i>
+                        <span>Overall (All-Time)</span>
+                    </div>
+                    ${isAllSelected ? '<span class="badge bg-primary text-white">Active</span>' : '<span class="badge bg-light text-secondary border font-mono">All</span>'}
+                `;
+                allDiv.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    selectYear('');
+                });
+                yearDropdown.appendChild(allDiv);
+            }
+
+            // 2. Year options
+            if (matches.length === 0 && !showAllTime) {
+                yearDropdown.innerHTML = '<div class="p-3 text-secondary small text-center">No matching release year found</div>';
+            } else {
+                matches.forEach(y => {
+                    const isSelected = String(activeYear) === String(y);
+                    const div = document.createElement('div');
+                    div.className = `search-item ${isSelected ? 'active-item' : ''}`;
+                    div.dataset.year = y;
+                    div.innerHTML = `
+                        <div class="d-flex align-items-center gap-2 font-mono">
+                            <i class="ti ti-calendar-event ${isSelected ? 'text-primary' : 'text-secondary'} small"></i>
+                            <span>${y}</span>
+                        </div>
+                        ${isSelected ? '<span class="badge bg-primary text-white">Active</span>' : '<span class="badge bg-light text-secondary border font-mono">Year</span>'}
+                    `;
+                    div.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        selectYear(y);
+                    });
+                    yearDropdown.appendChild(div);
+                });
+            }
+
+            highlightedYearIdx = -1;
+            yearDropdown.style.display = 'block';
+            if (yearDropdownIcon) {
+                yearDropdownIcon.className = 'ti ti-chevron-up';
+            }
+        }
+
+        function closeYearDropdown() {
+            if (yearDropdown) {
+                yearDropdown.style.display = 'none';
+            }
+            if (yearDropdownIcon) {
+                yearDropdownIcon.className = 'ti ti-chevron-down';
+            }
+            highlightedYearIdx = -1;
+        }
+
+        function selectYear(year) {
+            activeYear = year ? String(year) : '';
+            if (yearInput) {
+                yearInput.value = activeYear || 'Overall (All-Time)';
+            }
+            if (hiddenYearSelector) {
+                hiddenYearSelector.value = activeYear;
+            }
+            closeYearDropdown();
             loadTopMovies(activeYear);
             loadDominantGenre(activeYear || 2017);
+        }
+
+        function highlightItem(items, index) {
+            items.forEach((item, idx) => {
+                if (idx === index) {
+                    item.classList.add('highlighted');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('highlighted');
+                }
+            });
+        }
+
+        if (yearInput) {
+            yearInput.addEventListener('focus', () => {
+                yearInput.select();
+                renderYearDropdown('');
+            });
+
+            yearInput.addEventListener('input', () => {
+                renderYearDropdown(yearInput.value);
+            });
+
+            yearInput.addEventListener('keydown', (e) => {
+                const items = yearDropdown ? yearDropdown.querySelectorAll('.search-item') : [];
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (yearDropdown.style.display === 'none') {
+                        renderYearDropdown('');
+                        return;
+                    }
+                    if (items.length > 0) {
+                        highlightedYearIdx = (highlightedYearIdx + 1) % items.length;
+                        highlightItem(items, highlightedYearIdx);
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (items.length > 0) {
+                        highlightedYearIdx = (highlightedYearIdx - 1 + items.length) % items.length;
+                        highlightItem(items, highlightedYearIdx);
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (highlightedYearIdx >= 0 && items[highlightedYearIdx]) {
+                        const yr = items[highlightedYearIdx].dataset.year;
+                        selectYear(yr);
+                    } else {
+                        const val = yearInput.value.trim().toLowerCase();
+                        if (!val || val === 'all' || val === 'overall' || val.includes('all-time')) {
+                            selectYear('');
+                        } else {
+                            const parsed = parseInt(val, 10);
+                            if (availableYears.includes(parsed)) {
+                                selectYear(parsed);
+                            } else {
+                                yearInput.value = activeYear || 'Overall (All-Time)';
+                                closeYearDropdown();
+                            }
+                        }
+                    }
+                } else if (e.key === 'Escape') {
+                    yearInput.value = activeYear || 'Overall (All-Time)';
+                    closeYearDropdown();
+                }
+            });
+
+            yearInput.addEventListener('blur', () => {
+                setTimeout(() => {
+                    closeYearDropdown();
+                    const val = yearInput.value.trim().toLowerCase();
+                    if (!val || val === 'all' || val === 'overall' || val.includes('all-time')) {
+                        if (activeYear !== '') selectYear('');
+                        else yearInput.value = 'Overall (All-Time)';
+                    } else {
+                        const parsed = parseInt(val, 10);
+                        if (availableYears.includes(parsed)) {
+                            if (activeYear !== String(parsed)) selectYear(parsed);
+                        } else {
+                            yearInput.value = activeYear || 'Overall (All-Time)';
+                        }
+                    }
+                }, 150);
+            });
+        }
+
+        if (btnToggleYear) {
+            btnToggleYear.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (yearDropdown.style.display === 'block') {
+                    closeYearDropdown();
+                } else {
+                    yearInput.focus();
+                    renderYearDropdown('');
+                }
+            });
+        }
+
+        if (btnClearYear) {
+            btnClearYear.addEventListener('click', () => {
+                selectYear('');
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (yearDropdown && !yearDropdown.contains(e.target) && !yearInput.contains(e.target) && (!btnToggleYear || !btnToggleYear.contains(e.target))) {
+                closeYearDropdown();
+            }
         });
+
+        // Dynamic Release Year Loader (Issue #2)
+        async function loadAvailableYears() {
+            try {
+                const res = await fetch('/api/analytics/available-years/');
+                const data = await res.json();
+                availableYears = data.years || [];
+
+                if (hiddenYearSelector && availableYears.length > 0) {
+                    hiddenYearSelector.innerHTML = '<option value="">Overall (All-Time)</option>';
+                    availableYears.forEach(y => {
+                        const opt = document.createElement('option');
+                        opt.value = y;
+                        opt.textContent = y;
+                        if (String(y) === String(activeYear)) {
+                            opt.selected = true;
+                        }
+                        hiddenYearSelector.appendChild(opt);
+                    });
+                }
+
+                if (yearInput) {
+                    yearInput.value = activeYear ? String(activeYear) : 'Overall (All-Time)';
+                }
+            } catch (err) {
+                console.error("Failed to load available years:", err);
+            }
+        }
 
         // Genre Pill Filters
         document.querySelectorAll('.genre-btn').forEach(btn => {
@@ -1293,6 +1538,7 @@
             } catch (e) { console.warn('Could not load user info', e); }
 
             await Promise.all([
+                loadAvailableYears(),
                 loadMovieDetails(1),
                 loadMovieTags(1),
                 loadRatingDistribution(1),

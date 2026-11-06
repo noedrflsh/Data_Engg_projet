@@ -227,6 +227,17 @@ def api_genre_coverage(request):
     return JsonResponse({'coverage': coverage, 'latency_ms': latency_ms})
 
 
+def api_available_years(request):
+    """
+    Returns list of all distinct available release years in catalog.
+    """
+    t0 = time.time()
+    years = analytics.get_available_years()
+    latency_ms = round((time.time() - t0) * 1000, 2)
+    return JsonResponse({'years': years, 'latency_ms': latency_ms})
+
+
+
 # -------------------------------------------------------------
 # 9. Problem 4: Role-Based User Interaction - Rate Movie
 # -------------------------------------------------------------
