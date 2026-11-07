@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieLens OLAP - Interpretable System Architecture & Data Flows</title>
+    <!-- Mermaid.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-card: #111827;
+            --bg-card-subtle: #161f30;
+            --border-color: #1f293d;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-purple: #8b5cf6;
+            --accent-rose: #f43f5e;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px 20px 80px 20px;
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            letter-spacing: -0.01em;
+        }
+
+        header {
+            text-align: center;
+            max-width: 800px;
+            margin-bottom: 24px;
+        }
+        h1 {
+            color: #60a5fa;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+        }
+        p.subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* Sticky Navigation Bar */
+        .quick-nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0 32px 0;
+            position: sticky;
+            top: 15px;
+            z-index: 1000;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(10px);
+            padding: 8px 16px;
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+        }
+        .nav-btn {
+            background: #1e293b;
+            color: #f1f5f9;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.84rem;
+            font-weight: 500;
+            border: 1px solid #334155;
+            transition: all 0.15s ease;
+        }
+        .nav-btn:hover {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Diagram Cards */
+        .section-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 28px;
+            max-width: 1250px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            margin-bottom: 40px;
+            box-sizing: border-box;
+        }
+        .section-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        .badge-pill {
+            display: inline-block;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .badge-blue { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-green { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-purple { background: rgba(139, 92, 246, 0.15); color: #c084fc; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+        .section-header h2 {
+            margin: 0 0 6px 0;
+            font-size: 1.35rem;
+            color: #f8fafc;
+        }
+        .section-header p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Mermaid Wrapper */
+        .mermaid-container {
+            width: 100%;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 20px 10px;
+            border: 1px solid #1e293b;
+        }
+        .mermaid {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Explanatory Callout Cards */
+        .story-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+        .step-card {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .step-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 4px;
+        }
+        .step-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 6px;
+        }
+        .step-desc {
+            font-size: 0.84rem;
+            color: var(--text-secondary);
+            line-height: 1.45;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>MovieLens OLAP Architecture & Interpretable Data Flows</h1>
+        <p class="subtitle">DS5003 Data Engineering Lab &bull; IIT Palakkad &bull; Visual Guide to System Design</p>
+    </header>
+
+    <div class="quick-nav">
+        <a href="#section-star" class="nav-btn">🌟 1. Star Schema (Data Model)</a>
+        <a href="#section-flow" class="nav-btn">⚡ 2. End-to-End System Flow</a>
+        <a href="#section-stories" class="nav-btn">🎬 3. User Journeys (Search, Charts, Rating)</a>
+        <a href="#section-speed" class="nav-btn">🚀 4. Why Queries Run in 15ms</a>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- SECTION 1: STAR SCHEMA (EASY TO INTERPRET)                    -->
+    <!-- ============================================================= -->
+    <section id="section-star" class="section-card">
+        <div class="section-header">
+            <span class="badge-pill badge-blue">Data Modeling Layer</span>
+            <h2>1. The Dimensional Star Schema (Clean ER Model)</h2>
+            <p>Shows how the 32M ratings fact table connects to normalized dimensions. Notice the clean 1NF bridge table for multi-genre movies.</p>
+        </div>
+
+        <div class="mermaid-container">
+            <div class="mermaid">
+erDiagram
+    %% Core Relationships
+    DIM_MOVIES ||--|{ BRIDGE_MOVIE_GENRE : "has genres"
+    DIM_GENRES ||--|{ BRIDGE_MOVIE_GENRE : "categorizes"
+
+    DIM_MOVIES ||--o{ FACT_RATINGS : "rated"
+    DIM_USERS  ||--o{ FACT_RATINGS : "submits"
+    DIM_DATE   ||--o{ FACT_RATINGS : "timestamp"
+
+    DIM_MOVIES ||--o{ FACT_TAGS : "tagged"
+    DIM_USERS  ||--o{ FACT_TAGS : "creates"
+    DIM_DATE   ||--o{ FACT_TAGS : "timestamp"
+
+    %% Precomputed Views
+    DIM_MOVIES ||--|| MV_MOVIE_RATING_STATS : "precomputed summary"
+    DIM_GENRES ||--o{ MV_GENRE_YEAR_SUMMARY : "precomputed release count"
+
+    %% Entity Details
+    DIM_MOVIES {
+        int movie_id PK "87,585 titles"
+        text title "Cleaned title string"
+        int release_year "Extracted year e.g. 1995"
+    }
+
+    DIM_GENRES {
+        int genre_id PK "19 distinct genres"
+        varchar genre_name "Action, Comedy, Drama..."
+    }
+
+    BRIDGE_MOVIE_GENRE {
+        int movie_id PK,FK "147,090 mappings"
+        int genre_id PK,FK "1NF normalized bridge"
+    }
+
+    DIM_USERS {
+        int user_id PK "200,948 unique users"
+    }
+
+    DIM_DATE {
+        int date_key PK "YYYYMMDD e.g. 20170512"
+        date full_date "Calendar date"
+        int year "2017"
+        int month "5"
+    }
+
+    FACT_RATINGS {
+        bigint rating_id PK "Auto sequence"
+        int movie_id FK "32,000,204 rows"
+        int user_id FK "Reviewer ID"
+        int date_key FK "Date reference"
+        numeric rating "0.5 to 5.0 stars"
+    }
+
+    FACT_TAGS {
+        bigint tag_id PK "Auto sequence"
+        int movie_id FK "2,000,048 tags"
+        int user_id FK "Reviewer ID"
+        text tag "User tag string"
+    }
+
+    MV_MOVIE_RATING_STATS {
+        int movie_id PK "84,432 movies"
+        bigint total_ratings "Precalculated count"
+        numeric avg_rating "Precalculated average"
+    }
+
+    MV_GENRE_YEAR_SUMMARY {
+        int genre_id FK "2,079 rows"
+        int release_year "1874 to 2024"
+        bigint movie_count "Precalculated releases"
+    }
+            </div>
+        </div>
+
+        <div class="story-steps">
+            <div class="step-card">
+                <div class="step-number">CONCEPT 1</div>
+                <div class="step-title">The Central Fact Table</div>
+                <p class="step-desc"><code>fact_ratings</code> stores 32M numerical transactions. It contains only numbers (IDs, dates, ratings) to keep storage compact (3.7 GB).</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">CONCEPT 2</div>
+                <div class="step-title">1NF Bridge Normalization</div>
+                <p class="step-desc">Instead of storing <code>Adventure|Animation|Comedy</code> as messy text, <code>bridge_movie_genre</code> links movie IDs to genre IDs for instant indexed joins.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">CONCEPT 3</div>
+                <div class="step-title">Precomputed Materialized Views</div>
+                <p class="step-desc"><code>mv_movie_rating_stats</code> pre-aggregates 32M ratings down to 84k rows, reducing leaderboard query times from 18 seconds to 0.6 ms.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- SECTION 2: FULL-STACK FLOW (HIGHLY INTERPRETABLE)             -->
+    <!-- ============================================================= -->
+    <section id="section-flow" class="section-card">
+        <div class="section-header">
+            <span class="badge-pill badge-green">Architectural Flow</span>
+            <h2>2. The Full-Stack Interaction Flow (How Components Talk)</h2>
+            <p>Traces the communication path from the user's browser down to disk storage and back.</p>
+        </div>
+
+        <div class="mermaid-container">
+            <div class="mermaid">
+flowchart LR
+    %% 5 Clear Horizontal Lanes
+    subgraph LANE1["1. Browser UI"]
+        U_SEARCH["Movie Search<br/>(Debounced)"]
+        U_YEAR["Year Selector<br/>(2017...)"]
+        U_STARS["Star Rating<br/>(0.5 - 5.0 ★)"]
+        U_CHARTS["Chart.js Canvases<br/>(7 Scenarios)"]
+    end
+
+    subgraph LANE2["2. Django Backend"]
+        DJ_URLS["Router<br/>(urls.py)"]
+        DJ_VIEWS["Controllers<br/>(views.py)"]
+        DJ_AUTH["RBAC & Security<br/>(Admin / User)"]
+    end
+
+    subgraph LANE3["3. Service Layer"]
+        SRV_SQL["Safe SQL Builder<br/>(%s Parameterized)"]
+        SRV_UPSERT["Rating Upsert<br/>(ON CONFLICT)"]
+        SRV_POOL["Connection Pool<br/>(gumbo:2836)"]
+    end
+
+    subgraph LANE4["4. Acceleration Layer"]
+        IDX_COVER["Covering Index<br/>(idx_fact_ratings)"]
+        MV_STATS["Mat. View Stats<br/>(0.6ms Averages)"]
+        MV_GENRE["Mat. View Genres<br/>(0.5ms Releases)"]
+    end
+
+    subgraph LANE5["5. PostgreSQL Storage"]
+        DB_FACT["fact_ratings<br/>(32M rows / 3.7GB)"]
+        DB_TAGS["fact_tags<br/>(2M rows / 210MB)"]
+        DB_DIMS["Dimensions<br/>(Movies, Genres, Date)"]
+    end
+
+    %% Connections
+    U_SEARCH -->|GET /api/movies/search/| DJ_URLS
+    U_YEAR -->|GET /api/analytics/...| DJ_URLS
+    U_STARS -->|POST /api/ratings/rate/| DJ_URLS
+
+    DJ_URLS --> DJ_VIEWS
+    DJ_VIEWS --> SRV_SQL
+    DJ_VIEWS --> SRV_UPSERT
+
+    SRV_SQL --> SRV_POOL
+    SRV_UPSERT --> SRV_POOL
+
+    SRV_POOL -->|Query Leaderboard| MV_STATS
+    SRV_POOL -->|Query Dominant Genre| MV_GENRE
+    SRV_POOL -->|Query Distribution| IDX_COVER
+    IDX_COVER -->|Index Scan 15ms| DB_FACT
+
+    SRV_UPSERT -->|Upsert User Rating| DB_FACT
+
+    MV_STATS -->|Sub-20ms Result| DJ_VIEWS
+    MV_GENRE -->|Sub-20ms Result| DJ_VIEWS
+    DB_FACT -->|Sub-20ms Result| DJ_VIEWS
+    DJ_VIEWS -->|JSON + Latency ms| U_CHARTS
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- SECTION 3: THE 3 USER ACTION JOURNEYS                         -->
+    <!-- ============================================================= -->
+    <section id="section-stories" class="section-card">
+        <div class="section-header">
+            <span class="badge-pill badge-purple">Step-by-Step Journeys</span>
+            <h2>3. Tracing the 3 Primary User Actions</h2>
+            <p>Understand exactly what happens during Search, Dashboard Updates, and Rating Submission.</p>
+        </div>
+
+        <div class="story-steps">
+            <div class="step-card" style="border-top: 3px solid #3b82f6;">
+                <div class="step-number text-primary">JOURNEY A &bull; AUTOCOMPLETE SEARCH</div>
+                <div class="step-title">Searching for a Movie</div>
+                <p class="step-desc">
+                    <strong>1.</strong> User types <em>"Matrix"</em> in the search box.<br/>
+                    <strong>2.</strong> JavaScript waits <strong>250ms</strong> after typing stops (debounce).<br/>
+                    <strong>3.</strong> Sends <code>GET /api/movies/search/?q=Matrix</code>.<br/>
+                    <strong>4.</strong> PostgreSQL runs indexed <code>ILIKE</code> search on <code>dim_movies</code>.<br/>
+                    <strong>5.</strong> Returns matches in <strong>&lt; 1 ms</strong>; dropdown renders.
+                </p>
+            </div>
+
+            <div class="step-card" style="border-top: 3px solid #10b981;">
+                <div class="step-number text-success">JOURNEY B &bull; ANALYTICS DASHBOARD</div>
+                <div class="step-title">Selecting a Movie & Year</div>
+                <p class="step-desc">
+                    <strong>1.</strong> User clicks <em>"The Matrix (1999)"</em>.<br/>
+                    <strong>2.</strong> JavaScript fires 3 parallel requests for Tags, Details, and Rating Histogram.<br/>
+                    <strong>3.</strong> Query hits <code>idx_fact_ratings_movie_rating</code> B-Tree index.<br/>
+                    <strong>4.</strong> Runs an <strong>Index-Only Scan</strong> across 81,919 votes in <strong>15 ms</strong>.<br/>
+                    <strong>5.</strong> Chart.js smoothly animates and updates the visual panels.
+                </p>
+            </div>
+
+            <div class="step-card" style="border-top: 3px solid #f59e0b;">
+                <div class="step-number text-warning">JOURNEY C &bull; PROBLEM 4 USER ACTION</div>
+                <div class="step-title">Rating a Movie Live</div>
+                <p class="step-desc">
+                    <strong>1.</strong> User selects <strong>4.5 ★</strong> and clicks <em>"Save Rating"</em>.<br/>
+                    <strong>2.</strong> JavaScript sends <code>POST /api/ratings/rate/</code>.<br/>
+                    <strong>3.</strong> Django enforces role permission and checks if user already voted.<br/>
+                    <strong>4.</strong> Executes SQL <strong>UPSERT</strong> (inserts new or updates existing).<br/>
+                    <strong>5.</strong> Browser shows green toast and refreshes the rating chart!
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================= -->
+    <!-- SECTION 4: WHY QUERIES RUN IN 15MS                            -->
+    <!-- ============================================================= -->
+    <section id="section-speed" class="section-card">
+        <div class="section-header">
+            <span class="badge-pill badge-blue">Performance Engineering</span>
+            <h2>4. Why Queries Dropped from 18 Seconds to Sub-20 Milliseconds</h2>
+            <p>Visualizing the physical disk difference between Sequential Scans, Covering B-Trees, and Materialized Views.</p>
+        </div>
+
+        <div class="story-steps">
+            <div class="step-card" style="border-left: 4px solid #ef4444;">
+                <div class="step-number" style="color: #ef4444;">BEFORE OPTIMIZATION (18 SECONDS)</div>
+                <div class="step-title">Sequential Table Scan</div>
+                <p class="step-desc">
+                    The hard drive must physically read all <strong>450,000 disk blocks (3.7 GB)</strong> into memory, examining all 32,000,204 rows one by one.
+                </p>
+            </div>
+
+            <div class="step-card" style="border-left: 4px solid #f59e0b;">
+                <div class="step-number" style="color: #f59e0b;">WITH COVERING INDEX (15 MILLISECONDS)</div>
+                <div class="step-title">Index-Only B-Tree Scan</div>
+                <p class="step-desc">
+                    PostgreSQL traverses a <strong>3-level deep B-Tree index</strong>. It reads only ~30 blocks directly matching that movie, completely bypassing the 3.7 GB table!
+                </p>
+            </div>
+
+            <div class="step-card" style="border-left: 4px solid #10b981;">
+                <div class="step-number" style="color: #10b981;">WITH MATERIALIZED VIEW (0.6 MILLISECONDS)</div>
+                <div class="step-title">Precomputed Summary Scan</div>
+                <p class="step-desc">
+                    Calculations like averages and counts are precomputed once on disk (11 MB). Answering *"Top 10 movies"* searches only 84,432 rows in <strong>0.64 ms</strong>!
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                darkMode: true,
+                background: '#0f172a',
+                primaryColor: '#1e3a8a',
+                primaryTextColor: '#f8fafc',
+                primaryBorderColor: '#3b82f6',
+                lineColor: '#60a5fa',
+                secondaryColor: '#064e3b',
+                tertiaryColor: '#4c1d95'
+            }
+        });
+    </script>
+</body>
+</html>
