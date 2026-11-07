@@ -126,6 +126,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR),  # Since dashboard.html and styles.css are in BASE_DIR
+]
+
 # Auth redirects
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
