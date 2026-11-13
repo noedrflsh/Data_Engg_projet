@@ -17,6 +17,8 @@ env/
 # Large Datasets / Raw files
 movie_lens/ml-32m.zip
 movie_lens/ml-32m/
+movie_lens/ml-latest/
+ml-latest/
 *.zip
 *.tar.gz
 
@@ -31,6 +33,7 @@ architecture_diagrams.html
 
 COMPLETE_DEVELOPER_GUIDE
 project_description-1.md
+project_description-2.pdf
 PROJECT_OVERVIEW.md
 complete_developer_guidelines.md
 SCHEMA_DESIGN_GUIDE.md

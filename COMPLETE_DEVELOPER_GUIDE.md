@@ -1,8 +1,8 @@
 # 📖 The Master Data Engineering Guide: Complete Architecture & Code Walkthrough Manual
 
 > **Course**: DS5003 Data Engineering Lab &bull; IIT Palakkad  
-> **Project**: MovieLens 32M OLAP Intelligence & Analytics Platform  
-> **Dataset**: MovieLens 32M (`ml-32m`: 32,000,204 ratings, 2,000,048 tags, 87,585 movies, 200,948 users)  
+> **Project**: MovieLens OLAP Intelligence & Analytics Platform  
+> **Dataset**: MovieLens (`ml-latest`: 33,832,162 ratings, 2,328,315 tags, 86,537 movies, 330,975 users, 18,472,128 genome scores, 1,128 genome tags)  
 > **Core Stack**: PostgreSQL 16 + Django 6.1 + Psycopg 3 + Bootstrap 5 + Chart.js 4.4  
 > **Purpose**: An exhaustive, production-grade textbook and architectural manual detailing every design choice, database internal, SQL query plan, streaming algorithm, and full-stack execution lifecycle.
 
@@ -14,7 +14,7 @@
    - [1.1 The Multi-Tier Architecture](#11-the-multi-tier-architecture)
    - [1.2 End-to-End System Flow Diagram](#12-end-to-end-system-flow-diagram)
    - [1.3 Component Responsibilities Matrix](#13-component-responsibilities-matrix)
-2. [The MovieLens 32M Star Schema Data Warehouse & 3NF Normalization](#2-the-movielens-32m-star-schema-data-warehouse--3nf-normalization)
+2. [The MovieLens Star Schema Data Warehouse & 3NF Normalization](#2-the-movielens-star-schema-data-warehouse--3nf-normalization)
    - [2.1 Relational Entity-Relationship (ER) Diagram](#21-relational-entity-relationship-er-diagram)
    - [2.2 Normalization Deep Dive: 1NF, 2NF, 3NF & BCNF](#22-normalization-deep-dive-1nf-2nf-3nf--bcnf)
    - [2.3 Dimension Tables Specification](#23-dimension-tables-specification)
@@ -197,7 +197,7 @@ Here is the exact structural interaction trace across all layers of the stack wh
 
 | Component | Technology | Primary Role | Performance Characteristic |
 | :--- | :--- | :--- | :--- |
-| **Ingestion Pipeline** | Python 3 + Psycopg 3 | Bulk streams 32M CSV records into PostgreSQL | Streams 2M rows/sec via binary `COPY` in ~3 mins |
+| **Ingestion Pipeline** | Python 3 + Psycopg 3 | Bulk streams 33.8M CSV records into PostgreSQL | Streams 2M rows/sec via binary `COPY` in ~3 mins |
 | **Storage Engine** | PostgreSQL 16 | Star schema, relational constraints, foreign keys | 3.7 GB heap, 8 KB disk pages, WAL logging |
 | **Indexing Layer** | B-Tree Indexes | Eliminates table scans via Index-Only Scans | Index-Only Scans execute in **0.5ms to 15ms** |
 | **Materialized Views** | PostgreSQL Materialized Views | Precomputes catalog-wide ratings & genre stats | Replaces 18-second table scans with **sub-millisecond** seeks |
@@ -207,7 +207,7 @@ Here is the exact structural interaction trace across all layers of the stack wh
 
 ---
 
-## 2. The MovieLens 32M Star Schema Data Warehouse & 3NF Normalization
+## 2. The MovieLens Star Schema Data Warehouse & 3NF Normalization
 
 ### 2.1 Relational Entity-Relationship (ER) Diagram
 
@@ -291,7 +291,7 @@ flowchart LR
     subgraph RAW["Raw CSV Anomalies"]
         R1["genres = 'Adventure|Animation|Comedy'\n(1NF Violation: Repeating Groups)"]
         R2["title = 'Toy Story (1995)'\n(Composite Data: Title + Release Year)"]
-        R3["timestamp = 1112486027\n(Costly date parsing on 32M rows)"]
+        R3["timestamp = 1112486027\n(Costly date parsing on 33.8M rows)"]
     end
 
     subgraph NORM["3NF Star Schema Architecture"]
@@ -505,7 +505,7 @@ Let's analyze why conventional Python insertion methods fail when loading 32 mil
 ```mermaid
 flowchart TD
     subgraph SLOW["Standard Insertion Protocols (Inefficient)"]
-        A["Python for row in df.iterrows()\ncursor.execute('INSERT INTO ...')\n32M network roundtrips\nEst. Time: 14+ Hours"]
+        A["Python for row in df.iterrows()\ncursor.execute('INSERT INTO ...')\n33.8M network roundtrips\nEst. Time: 14+ Hours"]
         B["Django ORM: FactRating.objects.bulk_create(batch_size=5000)\nObject inflation overhead, Python GC pauses\nEst. Time: ~45 Minutes"]
     end
 
@@ -548,7 +548,7 @@ To ensure our ETL pipeline runs smoothly on any machine with as little as 2 GB o
 
 ```python
 chunk_size = 2_000_000
-for chunk_idx, chunk in enumerate(pd.read_csv('ml-32m/ratings.csv', chunksize=chunk_size)):
+for chunk_idx, chunk in enumerate(pd.read_csv('ml-latest/ratings.csv', chunksize=chunk_size)):
     # 1. Vectorized date_key generation
     dt = pd.to_datetime(chunk['timestamp'], unit='s')
     chunk['date_key'] = (dt.dt.year * 10000 + dt.dt.month * 100 + dt.dt.day).astype('int32')
@@ -975,7 +975,7 @@ The dashboard is built using modern **Vanilla JavaScript (ES6+)** with **Fetch A
 
 ```text
 +----------------------------------------------------------------------------------------------------+
-|  NAVBAR: [ MovieLens 32M OLAP Intelligence ]       [ Active DB: PostgreSQL 16 ]  [ User / Logout ] |
+|  NAVBAR: [ MovieLens OLAP Intelligence ]       [ Active DB: PostgreSQL 16 ]  [ User / Logout ] |
 +----------------------------------------------------------------------------------------------------+
 |  HERO PANEL: Active Movie Selector & Autocomplete Search Bar                                       |
 |  [ Search 87,000+ Movies: "Toy Story" ]  --> Live Dropdown Matches (< 1ms)                          |
@@ -1230,7 +1230,7 @@ flowchart TD
     E{"What error are you experiencing?"}
     E -- "FATAL: role gumbo does not exist" --> F1["Run:\nsudo -u postgres psql -c 'CREATE USER gumbo WITH PASSWORD '2836' SUPERUSER;'"]
     E -- "relation mv_movie_rating_stats does not exist" --> F2["Run:\npsql -U gumbo -d movie_lens -f optimize.sql"]
-    E -- "FileNotFoundError: ml-32m/movies.csv" --> F3["You ran etl_pipeline.py from root!\ncd movie_lens && unzip ml-32m.zip && python etl_pipeline.py"]
+    E -- "FileNotFoundError: ml-latest/movies.csv" --> F3["Ensure ml-latest.zip is at root or movie_lens/\npython etl_pipeline.py"]
     E -- "permission denied for table dim_movies" --> F4["Grant permissions:\npsql -d movie_lens -c 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO gumbo;'"]
     E -- "Port 8000 already in use" --> F5["Kill existing server:\nfuser -k 8000/tcp\nor run on port 8080"]
 ```
@@ -1262,4 +1262,4 @@ flowchart TD
 
 ---
 
-*This guide serves as the definitive technical reference for the MovieLens 32M OLAP Intelligence Platform.*
+*This guide serves as the definitive technical reference for the MovieLens OLAP Intelligence Platform.*

@@ -30,4 +30,5 @@ urlpatterns = [
     # Problem 4: User Rating Interaction (login required)
     path('api/ratings/rate/', views.api_submit_rating, name='api_submit_rating'),
     path('api/ratings/my-rating/', views.api_user_movie_rating, name='api_user_movie_rating'),
+    path('api/ratings/user-rating/', views.api_user_movie_rating, name='api_user_movie_rating'),
 ]

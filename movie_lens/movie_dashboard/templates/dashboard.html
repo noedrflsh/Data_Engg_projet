@@ -1,23 +1,527 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MovieLens OLAP Analytics &bull; IIT Palakkad</title>
+    <title>MovieLens Analytics &bull; IIT Palakkad</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Tabler Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <!-- Google Font: Plus Jakarta Sans & JetBrains Mono -->
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
+    <style>
+        :root {
+            --bg-canvas: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-subtle: #f1f5f9;
+            --border-subtle: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --border-focus: #4f46e5;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --accent-indigo: #4f46e5;
+            --accent-amber: #d97706;
+            --accent-emerald: #059669;
+            --accent-rose: #e11d48;
+            --accent-blue: #2563eb;
+            --accent-purple: #7c3aed;
+            --card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+            --card-shadow-hover: 0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+            --pill-bg: #f8fafc;
+            --pill-border: #e2e8f0;
+            --pill-color: #334155;
+            --chart-grid: #f1f5f9;
+            --chart-tick: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            letter-spacing: -0.015em;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Top Navigation Header */
+        .app-navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border-subtle);
+            position: sticky;
+            top: 0;
+            z-index: 1020;
+            box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03);
+        }
+
+        .brand-badge {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #4f46e5;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .brand-text {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            letter-spacing: -0.02em;
+        }
+        .brand-sub {
+            color: var(--text-muted);
+            font-size: 0.72rem;
+        }
+
+        /* Telemetry Metric Badges */
+        .header-metric {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .header-metric strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            animation: pulse-ring 2s infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* User Profile Pill */
+        .user-badge-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 11px;
+            border-radius: 8px;
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            font-size: 0.78rem;
+            color: var(--text-primary);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .role-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .btn-nav-primary {
+            background: #0f172a;
+            color: #ffffff !important;
+            border: 1px solid #0f172a;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            padding: 5px 13px;
+            font-weight: 600;
+            transition: all 0.15s ease;
+        }
+        .btn-nav-primary:hover {
+            background: #1e293b;
+            border-color: #1e293b;
+        }
+        .btn-nav-secondary {
+            background: #ffffff;
+            color: var(--text-secondary) !important;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-size: 0.78rem;
+            padding: 5px 12px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+        .btn-nav-secondary:hover {
+            background: #f8fafc;
+            color: var(--text-primary) !important;
+            border-color: var(--border-hover);
+        }
+
+        /* Modern Card Panels */
+        .panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 14px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .panel:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--card-shadow-hover);
+        }
+        .panel-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+        }
+        .panel-title {
+            font-size: 0.90rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            letter-spacing: -0.01em;
+        }
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* Badges */
+        .badge-latency {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+        .badge-question {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Editorial Movie Hero Banner */
+        .movie-hero {
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            border-top: 3px solid #4f46e5;
+            border-radius: 16px;
+            padding: 24px 28px;
+            box-shadow: var(--card-shadow);
+            position: relative;
+        }
+        .badge-movie-id {
+            background: #eef2ff;
+            color: #4338ca;
+            border: 1px solid #e0e7ff;
+            border-radius: 6px;
+            padding: 3px 9px;
+            font-size: 0.74rem;
+            font-weight: 700;
+        }
+        .badge-movie-year {
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 3px 9px;
+            font-size: 0.74rem;
+            font-weight: 600;
+        }
+        .movie-hero-title {
+            font-size: 1.85rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+        .movie-genre-tag {
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 8px;
+            background: #f8fafc;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            transition: all 0.15s ease;
+        }
+        .movie-genre-tag:hover {
+            border-color: #cbd5e1;
+            background: #f1f5f9;
+        }
+
+        /* Hero Stats Cards */
+        .hero-stats-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 16px;
+        }
+        .hero-stat-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 20px;
+            min-width: 175px;
+            text-align: right;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+        .hero-stat-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .hero-stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            line-height: 1.1;
+        }
+        .hero-stat-sub {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .hero-stat-hint {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* Quick Pick Pills */
+        .quick-pick-btn {
+            font-size: 0.76rem;
+            font-weight: 600;
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .quick-pick-btn:hover {
+            background: #f8fafc;
+            color: var(--accent-indigo);
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        .quick-pick-btn.active {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+        }
+
+        /* Autocomplete Dropdown */
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+            max-height: 320px;
+            overflow-y: auto;
+            z-index: 1050;
+            margin-top: 6px;
+        }
+        .search-item {
+            padding: 11px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background 0.12s ease;
+        }
+        .search-item:last-child { border-bottom: none; }
+        .search-item:hover {
+            background: #f8fafc;
+        }
+
+        /* Interactive Rating Box (Problem 4) */
+        .rating-interactive-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .star-box {
+            display: inline-flex;
+            gap: 8px;
+            font-size: 1.85rem;
+            color: #cbd5e1;
+            cursor: pointer;
+        }
+        .star-box i {
+            transition: color 0.15s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .star-box i.filled {
+            color: #f59e0b;
+        }
+        .star-box i:hover {
+            transform: scale(1.22);
+            color: #fbbf24;
+        }
+
+        /* Rating Pills Grid */
+        .rating-pills-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .rating-pill {
+            padding: 6px 4px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            border-radius: 7px;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            text-align: center;
+        }
+        .rating-pill:hover {
+            background: #f1f5f9;
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+        .rating-pill.active {
+            background: #0f172a !important;
+            color: #ffffff !important;
+            border-color: #0f172a !important;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+        }
+
+        .btn-action-rating {
+            background: #0f172a;
+            color: #ffffff !important;
+            border: 1px solid #0f172a;
+            border-radius: 9px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+            transition: all 0.15s ease;
+            font-size: 0.90rem;
+        }
+        .btn-action-rating:hover {
+            background: #1e293b;
+            border-color: #1e293b;
+            transform: translateY(-1px);
+        }
+
+        /* Genre Filter Pills */
+        .genre-btn {
+            font-size: 0.76rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 8px;
+            background: #ffffff;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        }
+        .genre-btn.active {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+        }
+        .genre-btn:hover:not(.active) {
+            background: #f8fafc;
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+
+        /* Form Inputs */
+        .form-control, .form-select {
+            background-color: #ffffff;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-size: 0.88rem;
+            border-radius: 8px;
+        }
+        .form-control:focus, .form-select:focus {
+            background-color: #ffffff;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+            color: var(--text-primary);
+        }
+
+        /* Chart Canvas wrapper */
+        .chart-box {
+            position: relative;
+            width: 100%;
+            height: 260px;
+        }
+        .chart-box-lg {
+            position: relative;
+            width: 100%;
+            height: 330px;
+        }
+
+        /* Toast Notifications */
+        .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 12px 20px;
+            color: #ffffff;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+            display: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
 
@@ -25,50 +529,50 @@
     <header class="app-navbar py-2 px-4">
         <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="brand-badge">
-                        <i class="ti ti-chart-dots"></i>
-                    </span>
-                    <div>
-                        <h6 class="mb-0 fw-bold text-dark">MovieLens Analytics</h6>
-                        <small class="text-secondary" style="font-size: 0.72rem;">IIT Palakkad &bull; DS5003 Data Engineering Lab</small>
-                    </div>
+                <span class="brand-badge">
+                    <i class="ti ti-chart-dots"></i>
+                </span>
+                <div>
+                    <h6 class="mb-0 fw-bold brand-text">MovieLens Analytics</h6>
+                    <small class="brand-sub">DS5003 Data Engineering Lab &bull; IIT Palakkad</small>
                 </div>
             </div>
 
             <!-- OLAP Database Telemetry -->
-            <div class="d-none d-md-flex align-items-center gap-2 font-mono">
+            <div class="d-none d-xl-flex align-items-center gap-2 font-mono">
                 <div class="header-metric">
                     <i class="ti ti-database text-primary"></i>
-                    <span>Ratings: <strong>32,000,204</strong></span>
+                    <span>Ratings: <strong>33,832,162</strong></span>
                 </div>
                 <div class="header-metric">
-                    <i class="ti ti-movie text-success"></i>
-                    <span>Movies: <strong>87,585</strong></span>
+                    <i class="ti ti-film text-success"></i>
+                    <span>Movies: <strong>86,537</strong></span>
                 </div>
                 <div class="header-metric">
-                    <i class="ti ti-server text-warning"></i>
-                    <span>Engine: <strong>PostgreSQL 16</strong></span>
+                    <i class="ti ti-dna text-info"></i>
+                    <span>Genome: <strong>18.4M</strong></span>
                 </div>
                 <div class="header-metric">
-                    <i class="ti ti-bolt text-info"></i>
-                    <span>Latency: <strong id="globalLatency">- ms</strong></span>
+                    <span class="pulse-dot"></span>
+                    <span>PostgreSQL 16: <strong>Online</strong></span>
+                </div>
+                <div class="header-metric">
+                    <i class="ti ti-bolt text-warning"></i>
+                    <span>Avg Latency: <strong id="globalLatency">- ms</strong></span>
                 </div>
             </div>
 
-            <!-- User Auth Badge -->
+            <!-- User Auth Profile -->
             <div class="d-flex align-items-center gap-2">
-                <span class="d-inline-flex align-items-center gap-1 px-2 py-1 rounded-2"
-                      id="userBadge"
-                      style="background: #f1f5f9; border: 1px solid #e2e8f0; font-size: 0.78rem;">
-                    <i class="ti ti-user-circle text-secondary"></i>
-                    <span id="usernameLabel" class="text-dark fw-medium">...</span>
-                    <span id="roleLabel" class="ms-1" style="font-size:0.68rem; font-weight:600; padding:2px 6px; border-radius:4px;"></span>
+                <span class="user-badge-container" id="userBadge">
+                    <i class="ti ti-user-circle text-muted fs-5"></i>
+                    <span id="usernameLabel" class="fw-medium">...</span>
+                    <span id="roleLabel" class="role-badge">...</span>
                 </span>
-                <a id="logoutBtn" href="/logout/" class="btn btn-sm btn-outline-secondary" style="font-size:0.78rem; padding: 4px 10px; display:none;">
+                <a id="logoutBtn" href="/logout/" class="btn btn-sm btn-nav-secondary" style="display:none;">
                     <i class="ti ti-logout me-1"></i>Logout
                 </a>
-                <a id="loginBtn" href="/login/" class="btn btn-sm btn-dark-modern" style="font-size:0.78rem; padding: 4px 10px; display:none;">
+                <a id="loginBtn" href="/login/" class="btn btn-sm btn-nav-primary" style="display:none;">
                     <i class="ti ti-login me-1"></i>Login
                 </a>
             </div>
@@ -82,55 +586,48 @@
         <!-- ========================================================= -->
         <section class="panel p-3 mb-4">
             <div class="row g-3 align-items-center">
-                <!-- Movie Search Autocomplete (Polished) -->
+                <!-- Movie Search Autocomplete -->
                 <div class="col-lg-5 col-md-6 position-relative">
-                    <label class="form-label text-secondary small mb-1 fw-medium d-flex justify-content-between align-items-center">
-                        <span><i class="ti ti-search me-1"></i>Search Movie (Questions 3a, 3d & Rating):</span>
-                        <span class="text-muted small font-mono d-none d-sm-inline">Press <kbd class="bg-light text-secondary border px-1" style="font-size: 0.72rem;">/</kbd></span>
+                    <label class="form-label text-muted small mb-1 fw-semibold">
+                        <i class="ti ti-search me-1 text-primary"></i>Search Movie (Questions 3a, 3d & Rating):
                     </label>
                     <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-secondary" id="searchIconBox">
-                            <i class="ti ti-film" id="searchStaticIcon"></i>
-                            <div class="spinner-border spinner-border-sm text-primary d-none" id="searchSpinner" role="status" style="width: 1rem; height: 1rem;"></div>
+                        <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: var(--border-subtle);">
+                            <i class="ti ti-film"></i>
                         </span>
-                        <input type="text" id="movieSearchInput" class="form-control border-start-0 border-end-0" placeholder="Search 87k+ movies by title (e.g. Shawshank, Inception)..." autocomplete="off" value="">
-                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch" title="Clear search" style="display: none;">
+                        <input type="text" id="movieSearchInput" class="form-control border-start-0" placeholder="Type title (e.g. Shawshank, Inception, Matrix, Pulp Fiction)..." autocomplete="off" value="Toy Story">
+                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch" style="border-color: var(--border-subtle);">
                             <i class="ti ti-x"></i>
                         </button>
                     </div>
-                    <div id="searchDropdown" class="search-results-dropdown shadow-lg" style="display: none; max-height: 380px;"></div>
+                    <div id="searchDropdown" class="search-results-dropdown" style="display: none;"></div>
                 </div>
 
-                <!-- Global Year Filter (Searchable Autocomplete) -->
-                <div class="col-lg-3 col-md-3 position-relative">
-                    <label class="form-label text-secondary small mb-1 fw-medium">
-                        <i class="ti ti-calendar me-1"></i>Release Year Filter (Questions 3b, 3f):
+                <!-- Global Year Filter -->
+                <div class="col-lg-3 col-md-3">
+                    <label class="form-label text-muted small mb-1 fw-semibold">
+                        <i class="ti ti-calendar me-1 text-warning"></i>Release Year Filter (Questions 3b, 3f):
                     </label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light border-end-0 text-secondary">
-                            <i class="ti ti-calendar"></i>
-                        </span>
-                        <input type="text" id="yearSearchInput" class="form-control border-start-0 font-mono" placeholder="Type year or 'All'..." autocomplete="off" value="2017">
-                        <button class="btn btn-outline-secondary" type="button" id="btnClearYear" title="Reset to Overall (All-Time)">
-                            <i class="ti ti-x"></i>
-                        </button>
-                        <button class="btn btn-outline-secondary" type="button" id="btnToggleYearDropdown" title="Toggle years list">
-                            <i class="ti ti-chevron-down" id="yearDropdownIcon"></i>
-                        </button>
-                    </div>
-                    <!-- Hidden select for backward compatibility with tests/scripts -->
-                    <select id="yearSelector" style="display: none;">
+                    <select id="yearSelector" class="form-select font-mono">
                         <option value="">Overall (All-Time)</option>
+                        <option value="2019">2019</option>
+                        <option value="2018">2018</option>
                         <option value="2017" selected>2017</option>
+                        <option value="2016">2016</option>
+                        <option value="2015">2015</option>
+                        <option value="2010">2010</option>
+                        <option value="2005">2005</option>
+                        <option value="2000">2000</option>
+                        <option value="1995">1995</option>
+                        <option value="1994">1994</option>
                     </select>
-                    <div id="yearDropdown" class="search-results-dropdown" style="display: none;"></div>
                 </div>
 
                 <!-- Quick Pick Suggestions -->
                 <div class="col-lg-4 col-md-3">
-                    <span class="text-secondary small d-block mb-1 fw-medium">Quick Benchmarks:</span>
+                    <span class="text-muted small d-block mb-1 fw-semibold">Quick Benchmarks:</span>
                     <div class="d-flex flex-wrap gap-1">
-                        <button class="quick-pick-btn" data-id="1" data-title="Toy Story (1995)">Toy Story</button>
+                        <button class="quick-pick-btn active" data-id="1" data-title="Toy Story (1995)">Toy Story</button>
                         <button class="quick-pick-btn" data-id="318" data-title="Shawshank Redemption">Shawshank</button>
                         <button class="quick-pick-btn" data-id="2571" data-title="Matrix, The">The Matrix</button>
                         <button class="quick-pick-btn" data-id="79132" data-title="Inception">Inception</button>
@@ -144,14 +641,14 @@
         <!-- Selected Movie Metadata Banner                           -->
         <!-- ========================================================= -->
         <section class="movie-hero mb-4">
-            <div class="row align-items-center g-3">
-                <div class="col-md-7">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 font-mono" id="movieBadgeId">Movie #1</span>
-                        <span class="text-secondary small font-mono" id="movieReleaseYear">1995</span>
+            <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge-movie-id font-mono" id="movieBadgeId"><i class="ti ti-film me-1"></i>Movie #1</span>
+                        <span class="badge-movie-year font-mono" id="movieReleaseYear"><i class="ti ti-calendar me-1"></i>1995</span>
                     </div>
-                    <h3 class="mb-2 fw-bold text-dark" id="movieHeroTitle">Toy Story</h3>
-                    <div class="d-flex flex-wrap gap-1" id="movieGenresList">
+                    <h2 class="movie-hero-title mb-2" id="movieHeroTitle">Toy Story</h2>
+                    <div class="d-flex flex-wrap gap-2 pt-1" id="movieGenresList">
                         <span class="movie-genre-tag">Adventure</span>
                         <span class="movie-genre-tag">Animation</span>
                         <span class="movie-genre-tag">Children</span>
@@ -159,20 +656,25 @@
                         <span class="movie-genre-tag">Fantasy</span>
                     </div>
                 </div>
-                <div class="col-md-5 d-flex justify-content-md-end gap-4 font-mono">
-                    <div class="text-md-end">
-                        <span class="text-secondary small d-block">Average Rating</span>
-                        <div class="d-flex align-items-center justify-content-md-end gap-1">
-                            <i class="ti ti-star-filled text-warning fs-5"></i>
-                            <span class="fs-3 fw-bold text-dark" id="movieHeroAvg">3.90</span>
-                            <span class="text-secondary small">/ 5.0</span>
+                <div class="col-lg-5">
+                    <div class="hero-stats-wrapper">
+                        <div class="hero-stat-card">
+                            <span class="hero-stat-label">Average Rating</span>
+                            <div class="hero-stat-value" style="color: #d97706;">
+                                <i class="ti ti-star-filled text-warning"></i>
+                                <span id="movieHeroAvg">3.90</span>
+                                <span class="hero-stat-sub">/ 5.0</span>
+                            </div>
+                            <span class="hero-stat-hint font-mono">3NF Warehouse Aggregation</span>
                         </div>
-                    </div>
-                    <div class="vr my-1 opacity-25"></div>
-                    <div class="text-md-end">
-                        <span class="text-secondary small d-block">Total Reviews</span>
-                        <span class="fs-3 fw-bold text-dark" id="movieHeroVotes">68,997</span>
-                        <small class="text-secondary d-block">ratings</small>
+                        <div class="hero-stat-card">
+                            <span class="hero-stat-label">Total Reviews</span>
+                            <div class="hero-stat-value" style="color: #4f46e5;">
+                                <i class="ti ti-users text-primary"></i>
+                                <span id="movieHeroVotes">76,814</span>
+                            </div>
+                            <span class="hero-stat-hint font-mono">Live fact_ratings count</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -187,15 +689,20 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-tags text-primary"></i>
-                            3(a) Top-5 Tag Relevance Scores
+                            <i class="ti ti-tags text-primary fs-5"></i>
+                            3(a) Top-5 Tag Relevance
                         </h6>
                         <span class="badge-latency font-mono" id="tagRelevanceLatency">0 ms</span>
                     </div>
                     <div class="panel-body">
-                        <p class="text-secondary small mb-3">Relevance scores calculated per movie (from genome or user-tag frequencies):</p>
+                        <p class="text-muted small mb-3">Genome relevance scores (0.0 to 1.0) ranked for selected movie:</p>
                         <div class="chart-box">
                             <canvas id="chartTags"></canvas>
+                            <div id="chartTagsEmpty" class="d-none flex-column align-items-center justify-content-center h-100 text-center py-4">
+                                <i class="ti ti-dna-off fs-1 text-secondary mb-2" style="opacity: 0.5;"></i>
+                                <div class="fw-semibold text-secondary small">No Genome Data Available</div>
+                                <small class="text-muted" style="font-size: 0.75rem;">This movie has no genome relevance scores in the dataset.</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -206,13 +713,13 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-chart-histogram text-warning"></i>
-                            3(d) User Rating Distribution
+                            <i class="ti ti-chart-histogram text-warning fs-5"></i>
+                            3(d) Rating Distribution
                         </h6>
                         <span class="badge-latency font-mono" id="ratingDistLatency">0 ms</span>
                     </div>
                     <div class="panel-body">
-                        <p class="text-secondary small mb-3">Frequency of ratings across 10 discrete intervals (0.5 to 5.0 stars):</p>
+                        <p class="text-muted small mb-3">Vote counts across 10 rating intervals (0.5 to 5.0 stars):</p>
                         <div class="chart-box">
                             <canvas id="chartRatingDist"></canvas>
                         </div>
@@ -225,47 +732,64 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-user-check text-success"></i>
-                            Problem 4: User Rating Action
+                            <i class="ti ti-user-check text-success fs-5"></i>
+                            Problem 4: Rate This Movie
                         </h6>
-                        <span class="badge-question font-mono">User Role</span>
+                        <span class="badge-question font-mono">RBAC</span>
                     </div>
                     <div class="panel-body d-flex flex-column justify-content-between">
                         <div>
-                            <p class="text-secondary small mb-3">
-                                As per specification, authenticated users can rate or modify their existing rating for any movie in the database.
+                            <p class="text-muted small mb-3">
+                                Authenticated users can modify or submit new ratings directly into PostgreSQL <code class="font-mono">fact_ratings</code>.
                             </p>
                             
-                            <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                            <div class="rating-interactive-box mb-3">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="text-secondary small">Your Rating:</span>
-                                    <span class="fw-bold font-mono text-warning fs-5" id="userRatingLabel">Loading...</span>
+                                    <span class="small fw-semibold text-muted">Your Selection:</span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge font-mono" id="ratingStatusBadge" style="font-size:0.7rem;">Not Rated</span>
+                                        <span class="fw-bold font-mono fs-4 text-warning" id="userRatingLabel">4.0 ★</span>
+                                    </div>
                                 </div>
                                 <div class="text-center py-2">
-                                    <div class="star-box" id="interactiveStars" title="Click stars to rate">
-                                        <i class="ti ti-star" data-val="1"></i>
-                                        <i class="ti ti-star" data-val="2"></i>
-                                        <i class="ti ti-star" data-val="3"></i>
-                                        <i class="ti ti-star" data-val="4"></i>
+                                    <div class="star-box mb-3" id="interactiveStars">
+                                        <i class="ti ti-star-filled filled" data-val="1"></i>
+                                        <i class="ti ti-star-filled filled" data-val="2"></i>
+                                        <i class="ti ti-star-filled filled" data-val="3"></i>
+                                        <i class="ti ti-star-filled filled" data-val="4"></i>
                                         <i class="ti ti-star" data-val="5"></i>
                                     </div>
-                                </div>
-                                <div class="mt-2">
-                                    <input type="range" class="form-range" id="ratingSlider" min="0.5" max="5.0" step="0.5" value="3.0" title="Slide to adjust rating">
-                                    <div class="d-flex justify-content-between text-secondary" style="font-size: 0.72rem;">
-                                        <span>0.5 ★</span>
-                                        <span>2.5 ★</span>
-                                        <span>5.0 ★</span>
+                                    <!-- Quick Rating Selection (0.5 to 5.0) -->
+                                    <div class="rating-pills-grid" id="ratingPills">
+                                        <button type="button" class="rating-pill font-mono" data-rating="0.5">0.5</button>
+                                        <button type="button" class="rating-pill font-mono" data-rating="1.0">1.0</button>
+                                        <button type="button" class="rating-pill font-mono" data-rating="1.5">1.5</button>
+                                        <button type="button" class="rating-pill font-mono" data-rating="2.0">2.0</button>
+                                        <button type="button" class="rating-pill font-mono" data-rating="2.5">2.5</button>
+                                        <button type="button" class="rating-pill font-mono" data-rating="3.0">3.0</button>
+                                        <button type="button" class="rating-pill font-mono" data-rating="3.5">3.5</button>
+                                        <button type="button" class="rating-pill font-mono active" data-rating="4.0">4.0</button>
+                                        <button type="button" class="rating-pill font-mono" data-rating="4.5">4.5</button>
+                                        <button type="button" class="rating-pill font-mono" data-rating="5.0">5.0</button>
                                     </div>
+                                </div>
+                                <div class="d-flex justify-content-between text-muted mt-2" style="font-size: 0.72rem;">
+                                    <span>0.5 Stars (Poor)</span>
+                                    <span>2.5 Stars (Average)</span>
+                                    <span>5.0 Stars (Masterpiece)</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div>
-                            <button class="btn btn-dark-modern w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-medium" id="btnSaveRating">
-                                <i class="ti ti-device-floppy"></i>
-                                Save / Update Rating in PostgreSQL
+                        <div id="ratingButtonContainer">
+                            <button class="btn btn-action-rating w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold" id="btnSaveRating">
+                                <i class="ti ti-device-floppy fs-5"></i>
+                                Save Rating in PostgreSQL
                             </button>
+                            <a href="/login/?next=/" class="btn btn-action-rating w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold text-decoration-none" id="btnLoginToRate" style="display: none;">
+                                <i class="ti ti-lock fs-5"></i>
+                                Click Here to Login & Rate
+                            </a>
                             <div id="ratingAlert" class="mt-2 text-center small font-mono" style="display: none;"></div>
                         </div>
                     </div>
@@ -283,7 +807,7 @@
                     <div class="panel-header">
                         <div class="d-flex align-items-center gap-2">
                             <h6 class="panel-title">
-                                <i class="ti ti-trophy text-amber"></i>
+                                <i class="ti ti-trophy fs-5" style="color: #d97706;"></i>
                                 3(b) Top 10 Movies by Average Rating
                             </h6>
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-mono" id="topMoviesFilterBadge">Year: 2017</span>
@@ -304,25 +828,25 @@
                     <div class="panel-header">
                         <div class="d-flex align-items-center gap-2">
                             <h6 class="panel-title">
-                                <i class="ti ti-crown text-danger"></i>
+                                <i class="ti ti-crown fs-5" style="color: #e11d48;"></i>
                                 3(f) Dominant Genre
                             </h6>
-                            <span class="badge bg-secondary-subtle text-dark font-mono" id="dominantYearPill">2017</span>
+                            <span class="badge bg-secondary-subtle font-mono text-dark" id="dominantYearPill">2017</span>
                         </div>
                         <span class="badge-latency font-mono" id="dominantLatency">0 ms</span>
                     </div>
                     <div class="panel-body">
-                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-3" style="background: #fef2f2; border: 1px solid #fee2e2;">
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-3" style="background: #fff1f2; border: 1px solid #ffe4e6;">
                             <div>
-                                <small class="text-danger text-uppercase fw-semibold" style="font-size: 0.7rem; letter-spacing: 0.05em;">#1 Release Category</small>
+                                <small class="text-danger text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.06em;">#1 Release Category</small>
                                 <h3 class="mb-0 fw-bold text-dark" id="dominantGenreTitle">Drama</h3>
                             </div>
                             <div class="text-end font-mono">
                                 <span class="fs-4 fw-bold text-danger" id="dominantGenreCount">1,423</span>
-                                <small class="text-secondary d-block">films released</small>
+                                <small class="text-muted d-block">films released</small>
                             </div>
                         </div>
-                        <div class="chart-box" style="height: 215px;">
+                        <div class="chart-box" style="height: 225px;">
                             <canvas id="chartDominantGenre"></canvas>
                         </div>
                     </div>
@@ -339,7 +863,7 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-hash text-success"></i>
+                            <i class="ti ti-hash text-success fs-5"></i>
                             3(c) Popular Tags by Genre
                         </h6>
                         <span class="badge-latency font-mono" id="genreTagsLatency">0 ms</span>
@@ -357,6 +881,11 @@
                         </div>
                         <div class="chart-box" style="height: 220px;">
                             <canvas id="chartGenreTags"></canvas>
+                            <div id="chartGenreTagsEmpty" class="d-none flex-column align-items-center justify-content-center h-100 text-center py-4">
+                                <i class="ti ti-tags-off fs-1 text-secondary mb-2" style="opacity: 0.5;"></i>
+                                <div class="fw-semibold text-secondary small" id="chartGenreTagsEmptyTitle">No Tag Data Available</div>
+                                <small class="text-muted" id="chartGenreTagsEmptySubtitle" style="font-size: 0.75rem;">No user tags recorded for this genre.</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -367,7 +896,7 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-chart-pie text-info"></i>
+                            <i class="ti ti-chart-pie text-info fs-5"></i>
                             3(g) Genre Coverage (% of Catalog)
                         </h6>
                         <span class="badge-latency font-mono" id="coverageLatency">0 ms</span>
@@ -385,8 +914,8 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-chart-bar text-purple"></i>
-                            3(e) Total Ratings Volume Distribution
+                            <i class="ti ti-chart-bar fs-5" style="color: #7c3aed;"></i>
+                            3(e) Total Ratings Volume
                         </h6>
                         <span class="badge-latency font-mono" id="volumeLatency">0 ms</span>
                     </div>
@@ -410,12 +939,13 @@
     <script>
         // Global State
         let activeMovieId = 1;
-        let activeRating = null;
+        let activeRating = 4.0;
         let activeYear = 2017;
         let cachedGenreTags = null;
+        let isUserAuthenticated = false;
         const charts = {};
 
-        // Modern Light Theme Defaults for Chart.js
+        // Clean Modern Light Theme Defaults for Chart.js
         Chart.defaults.color = '#64748b';
         Chart.defaults.borderColor = '#f1f5f9';
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
@@ -425,20 +955,23 @@
         Chart.defaults.plugins.tooltip.borderColor = '#e2e8f0';
         Chart.defaults.plugins.tooltip.borderWidth = 1;
         Chart.defaults.plugins.tooltip.padding = 10;
-        Chart.defaults.plugins.tooltip.boxPadding = 4;
+        Chart.defaults.plugins.tooltip.boxPadding = 5;
         Chart.defaults.plugins.tooltip.usePointStyle = true;
 
         function renderChart(canvasId, config) {
             if (charts[canvasId]) {
                 charts[canvasId].destroy();
             }
-            const ctx = document.getElementById(canvasId).getContext('2d');
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
             charts[canvasId] = new Chart(ctx, config);
             return charts[canvasId];
         }
 
         function showToast(msg, isSuccess = true) {
             const toast = document.getElementById('toastAlert');
+            if (!toast) return;
             toast.textContent = msg;
             toast.style.borderColor = isSuccess ? '#10b981' : '#f43f5e';
             toast.style.display = 'block';
@@ -455,8 +988,8 @@
                 const d = await res.json();
                 
                 document.getElementById('movieHeroTitle').textContent = d.title;
-                document.getElementById('movieBadgeId').textContent = `Movie #${d.movie_id}`;
-                document.getElementById('movieReleaseYear').textContent = d.release_year || 'Unknown';
+                document.getElementById('movieBadgeId').innerHTML = `<i class="ti ti-film me-1"></i>Movie #${d.movie_id}`;
+                document.getElementById('movieReleaseYear').innerHTML = `<i class="ti ti-calendar me-1"></i>${d.release_year || 'N/A'}`;
                 document.getElementById('movieHeroAvg').textContent = d.avg_rating.toFixed(2);
                 document.getElementById('movieHeroVotes').textContent = d.total_ratings.toLocaleString();
 
@@ -468,29 +1001,6 @@
                     span.textContent = g;
                     genresContainer.appendChild(span);
                 });
-
-                // Persisted User Rating Sync
-                const ratingSlider = document.getElementById('ratingSlider');
-                const alertBox = document.getElementById('ratingAlert');
-                if (d.user_rating !== null && d.user_rating !== undefined) {
-                    activeRating = parseFloat(d.user_rating);
-                    document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
-                    if (ratingSlider) ratingSlider.value = activeRating;
-                    updateStarVisuals(activeRating);
-                    if (alertBox) {
-                        alertBox.style.display = 'block';
-                        alertBox.className = 'mt-2 text-center small font-mono text-success';
-                        alertBox.textContent = `✓ Your rating: ${activeRating.toFixed(1)}★ in database`;
-                    }
-                } else {
-                    activeRating = 3.0;
-                    document.getElementById('userRatingLabel').textContent = 'Not rated yet';
-                    if (ratingSlider) ratingSlider.value = 3.0;
-                    updateStarVisuals(null);
-                    if (alertBox) {
-                        alertBox.style.display = 'none';
-                    }
-                }
             } catch (err) {
                 console.error("Failed to load movie details:", err);
             }
@@ -506,6 +1016,43 @@
                 document.getElementById('tagRelevanceLatency').textContent = `${data.latency_ms} ms`;
                 const tags = data.tags || [];
 
+                const canvas = document.getElementById('chartTags');
+                const emptyBox = document.getElementById('chartTagsEmpty');
+
+                if (!tags || tags.length === 0) {
+                    if (charts['chartTags']) {
+                        charts['chartTags'].destroy();
+                        delete charts['chartTags'];
+                    }
+                    if (canvas) canvas.style.display = 'none';
+                    if (emptyBox) {
+                        emptyBox.classList.remove('d-none');
+                        emptyBox.classList.add('d-flex');
+                    }
+                    return;
+                }
+
+                if (canvas) canvas.style.display = 'block';
+                if (emptyBox) {
+                    emptyBox.classList.add('d-none');
+                    emptyBox.classList.remove('d-flex');
+                }
+
+                // Rescale axis dynamically so tight clusters (e.g. 0.985 vs 0.999) are easily visualized
+                const scores = tags.map(t => t.relevance);
+                const minScore = scores.length ? Math.min(...scores) : 0;
+                const maxScore = scores.length ? Math.max(...scores) : 1.0;
+
+                let xMin = 0;
+                if (minScore >= 0.95) {
+                    xMin = Math.max(0, Math.floor((minScore - 0.015) * 50) / 50); // e.g. 0.96 or 0.95
+                } else if (minScore >= 0.85) {
+                    xMin = Math.max(0, Math.floor((minScore - 0.03) * 20) / 20); // e.g. 0.85 or 0.80
+                } else if (minScore >= 0.60) {
+                    xMin = Math.max(0, Math.floor((minScore - 0.05) * 10) / 10);
+                }
+                const xMax = 1.0;
+
                 renderChart('chartTags', {
                     type: 'bar',
                     data: {
@@ -513,9 +1060,8 @@
                         datasets: [{
                             label: 'Relevance',
                             data: tags.map(t => t.relevance),
-                            backgroundColor: 'rgba(79, 70, 229, 0.85)',
-                            borderColor: '#4f46e5',
-                            borderWidth: 1,
+                            backgroundColor: '#4f46e5',
+                            hoverBackgroundColor: '#4338ca',
                             borderRadius: 6
                         }]
                     },
@@ -527,13 +1073,21 @@
                             legend: { display: false },
                             tooltip: {
                                 callbacks: {
-                                    label: (ctx) => `Score: ${ctx.parsed.x.toFixed(4)}`
+                                    label: (ctx) => ` Relevance: ${ctx.parsed.x.toFixed(4)}`
                                 }
                             }
                         },
                         scales: {
-                            x: { beginAtZero: true, max: 1.0, grid: { color: '#f1f5f9' } },
-                            y: { grid: { display: false }, ticks: { color: '#334155', font: { weight: 500 } } }
+                            x: {
+                                min: xMin,
+                                max: xMax,
+                                grid: { color: '#f1f5f9' },
+                                ticks: {
+                                    callback: (val) => val.toFixed(2),
+                                    color: '#64748b'
+                                }
+                            },
+                            y: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
                         }
                     }
                 });
@@ -559,9 +1113,8 @@
                         datasets: [{
                             label: 'Votes',
                             data: dist.map(d => d.count),
-                            backgroundColor: 'rgba(217, 119, 6, 0.85)',
-                            borderColor: '#d97706',
-                            borderWidth: 1,
+                            backgroundColor: '#f59e0b',
+                            hoverBackgroundColor: '#d97706',
                             borderRadius: 6
                         }]
                     },
@@ -571,7 +1124,7 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { color: '#334155', font: { weight: 500 } } }
+                            x: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
                         }
                     }
                 });
@@ -581,7 +1134,7 @@
         }
 
         // =============================================================
-        // 4. Scenario 3(b): Top 10 Movies
+        // 4. Scenario 3(b): Top 10 Movies Leaderboard
         // =============================================================
         async function loadTopMovies(year = null) {
             try {
@@ -592,6 +1145,13 @@
                 document.getElementById('topMoviesFilterBadge').textContent = year ? `Year: ${year}` : 'Overall';
                 const movies = data.movies || [];
 
+                const ratings = movies.map(m => m.avg_rating);
+                const minRating = ratings.length ? Math.min(...ratings) : 3.5;
+                const maxRating = ratings.length ? Math.max(...ratings) : 5.0;
+                // Rescale axis dynamically so top movie rating differences pop out clearly
+                const xMin = Math.max(0, Math.floor((minRating - 0.15) * 10) / 10);
+                const xMax = Math.min(5.0, Math.ceil((maxRating + 0.05) * 10) / 10);
+
                 renderChart('chartTopMovies', {
                     type: 'bar',
                     data: {
@@ -599,9 +1159,8 @@
                         datasets: [{
                             label: 'Average Rating (★)',
                             data: movies.map(m => m.avg_rating),
-                            backgroundColor: 'rgba(13, 148, 136, 0.85)',
-                            borderColor: '#0d9488',
-                            borderWidth: 1,
+                            backgroundColor: '#2563eb',
+                            hoverBackgroundColor: '#1d4ed8',
                             borderRadius: 6
                         }]
                     },
@@ -613,13 +1172,21 @@
                             legend: { display: false },
                             tooltip: {
                                 callbacks: {
-                                    afterLabel: (ctx) => `Total Reviews: ${movies[ctx.dataIndex].total_ratings.toLocaleString()} | Year: ${movies[ctx.dataIndex].release_year || 'N/A'}`
+                                    afterLabel: (ctx) => `Reviews: ${movies[ctx.dataIndex].total_ratings.toLocaleString()} | Year: ${movies[ctx.dataIndex].release_year || 'N/A'}`
                                 }
                             }
                         },
                         scales: {
-                            x: { min: 3.5, max: 5.0, grid: { color: '#f1f5f9' } },
-                            y: { grid: { display: false }, ticks: { color: '#334155', font: { weight: 500 } } }
+                            x: {
+                                min: xMin,
+                                max: xMax,
+                                grid: { color: '#f1f5f9' },
+                                ticks: {
+                                    callback: (val) => val.toFixed(1) + ' ★',
+                                    color: '#64748b'
+                                }
+                            },
+                            y: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
                         }
                     }
                 });
@@ -641,12 +1208,10 @@
                 if (data.dominant) {
                     document.getElementById('dominantGenreTitle').textContent = data.dominant.genre;
                     document.getElementById('dominantGenreCount').textContent = data.dominant.count.toLocaleString();
-                } else {
-                    document.getElementById('dominantGenreTitle').textContent = 'None';
-                    document.getElementById('dominantGenreCount').textContent = '0';
                 }
 
                 const allGenres = (data.all_genres || []).slice(0, 6);
+
                 renderChart('chartDominantGenre', {
                     type: 'bar',
                     data: {
@@ -654,9 +1219,8 @@
                         datasets: [{
                             label: 'Releases',
                             data: allGenres.map(g => g.count),
-                            backgroundColor: 'rgba(225, 29, 72, 0.85)',
-                            borderColor: '#e11d48',
-                            borderWidth: 1,
+                            backgroundColor: '#e11d48',
+                            hoverBackgroundColor: '#be123c',
                             borderRadius: 6
                         }]
                     },
@@ -666,7 +1230,7 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#334155' } }
+                            x: { grid: { display: false }, ticks: { font: { size: 10, weight: 600 }, color: '#334155' } }
                         }
                     }
                 });
@@ -687,17 +1251,60 @@
                     document.getElementById('genreTagsLatency').textContent = `${data.latency_ms} ms`;
                 }
 
+                const canvas = document.getElementById('chartGenreTags');
+                const emptyBox = document.getElementById('chartGenreTagsEmpty');
+                const emptyTitle = document.getElementById('chartGenreTagsEmptyTitle');
+                const emptySubtitle = document.getElementById('chartGenreTagsEmptySubtitle');
+
+                const hasAnyData = Object.keys(cachedGenreTags).some(g => cachedGenreTags[g] && cachedGenreTags[g].length > 0);
+
+                if (!hasAnyData) {
+                    if (charts['chartGenreTags']) {
+                        charts['chartGenreTags'].destroy();
+                        delete charts['chartGenreTags'];
+                    }
+                    if (canvas) canvas.style.display = 'none';
+                    if (emptyBox) {
+                        emptyBox.classList.remove('d-none');
+                        emptyBox.classList.add('d-flex');
+                        if (emptyTitle) emptyTitle.textContent = "No Tag Dataset Detected";
+                        if (emptySubtitle) emptySubtitle.textContent = "Tags data not ingested. Ingest tags to view genre rankings.";
+                    }
+                    return;
+                }
+
                 const tags = cachedGenreTags[selectedGenre] || [];
+
+                if (!tags || tags.length === 0) {
+                    if (charts['chartGenreTags']) {
+                        charts['chartGenreTags'].destroy();
+                        delete charts['chartGenreTags'];
+                    }
+                    if (canvas) canvas.style.display = 'none';
+                    if (emptyBox) {
+                        emptyBox.classList.remove('d-none');
+                        emptyBox.classList.add('d-flex');
+                        if (emptyTitle) emptyTitle.textContent = `No Tags for ${selectedGenre}`;
+                        if (emptySubtitle) emptySubtitle.textContent = `No user tags recorded for ${selectedGenre} in this dataset.`;
+                    }
+                    return;
+                }
+
+                if (canvas) canvas.style.display = 'block';
+                if (emptyBox) {
+                    emptyBox.classList.add('d-none');
+                    emptyBox.classList.remove('d-flex');
+                }
+
                 renderChart('chartGenreTags', {
                     type: 'bar',
                     data: {
                         labels: tags.map(t => t.tag),
                         datasets: [{
-                            label: 'Occurrences',
+                            label: 'Frequency',
                             data: tags.map(t => t.count),
-                            backgroundColor: 'rgba(124, 58, 237, 0.85)',
-                            borderColor: '#7c3aed',
-                            borderWidth: 1,
+                            backgroundColor: '#059669',
+                            hoverBackgroundColor: '#047857',
                             borderRadius: 6
                         }]
                     },
@@ -707,7 +1314,7 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { color: '#334155', font: { weight: 500 } } }
+                            x: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
                         }
                     }
                 });
@@ -733,8 +1340,8 @@
                         datasets: [{
                             data: cov.slice(0, 8).map(c => c.coverage_pct),
                             backgroundColor: [
-                                '#4f46e5', '#0d9488', '#d97706', '#e11d48',
-                                '#7c3aed', '#0284c7', '#ea580c', '#64748b'
+                                '#4f46e5', '#06b6d4', '#10b981', '#f59e0b',
+                                '#e11d48', '#8b5cf6', '#2563eb', '#64748b'
                             ],
                             borderWidth: 2,
                             borderColor: '#ffffff'
@@ -743,14 +1350,15 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        cutout: '72%',
                         plugins: {
                             legend: {
                                 position: 'right',
-                                labels: { color: '#475569', font: { size: 11 }, boxWidth: 12, padding: 10 }
+                                labels: { font: { size: 11, weight: 600 }, color: '#475569', boxWidth: 12, padding: 10 }
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: (ctx) => `${ctx.label}: ${ctx.parsed}% of catalog`
+                                    label: (ctx) => ` ${ctx.label}: ${ctx.parsed}% of catalog`
                                 }
                             }
                         }
@@ -778,9 +1386,8 @@
                         datasets: [{
                             label: 'Titles',
                             data: dist.map(d => d.count),
-                            backgroundColor: 'rgba(37, 99, 235, 0.85)',
-                            borderColor: '#2563eb',
-                            borderWidth: 1,
+                            backgroundColor: '#7c3aed',
+                            hoverBackgroundColor: '#6d28d9',
                             borderRadius: 6
                         }]
                     },
@@ -790,7 +1397,7 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { color: '#334155', font: { weight: 500 } } }
+                            x: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
                         }
                     }
                 });
@@ -800,243 +1407,76 @@
         }
 
         // =============================================================
-        // 9. Redesigned Autocomplete Movie Search Logic
+        // 9. Autocomplete Search Logic
         // =============================================================
         let searchDebounce;
-        let highlightedMovieIdx = -1;
-        let currentSearchResults = [];
-
         const searchInput = document.getElementById('movieSearchInput');
         const searchDropdown = document.getElementById('searchDropdown');
-        const btnClearSearch = document.getElementById('btnClearSearch');
-        const searchSpinner = document.getElementById('searchSpinner');
-        const searchStaticIcon = document.getElementById('searchStaticIcon');
 
-        function setSearchLoading(isLoading) {
-            if (searchSpinner && searchStaticIcon) {
-                if (isLoading) {
-                    searchSpinner.classList.remove('d-none');
-                    searchStaticIcon.classList.add('d-none');
-                } else {
-                    searchSpinner.classList.add('d-none');
-                    searchStaticIcon.classList.remove('d-none');
-                }
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            const q = searchInput.value.trim();
+            if (q.length < 2) {
+                searchDropdown.style.display = 'none';
+                return;
             }
-        }
-
-        function updateClearBtn() {
-            if (btnClearSearch && searchInput) {
-                btnClearSearch.style.display = searchInput.value.length > 0 ? 'inline-block' : 'none';
-            }
-        }
-
-        function renderSearchResults(results, queryStr = '', isBenchmark = false) {
-            currentSearchResults = results;
-            highlightedMovieIdx = -1;
-            searchDropdown.innerHTML = '';
-
-            if (results.length === 0) {
-                searchDropdown.innerHTML = `
-                    <div class="p-4 text-center text-secondary">
-                        <i class="ti ti-movie-off fs-2 text-muted d-block mb-1"></i>
-                        <div class="fw-semibold text-dark">No movies found</div>
-                        <small class="text-muted">No title matches "${queryStr}". Try another title or genre keyword.</small>
-                    </div>
-                `;
-            } else {
-                // Section Header
-                const header = document.createElement('div');
-                header.className = 'px-3 py-2 text-uppercase text-secondary small fw-bold bg-light border-bottom d-flex justify-content-between align-items-center';
-                if (isBenchmark) {
-                    header.innerHTML = `<span><i class="ti ti-sparkles text-primary me-1"></i>Suggested Benchmarks</span><span class="text-muted font-mono" style="font-size: 0.75rem;">Fast Pick</span>`;
-                } else {
-                    header.innerHTML = `<span><i class="ti ti-search me-1"></i>Matching Movies</span><span class="text-muted font-mono" style="font-size: 0.75rem;">${results.length} found</span>`;
-                }
-                searchDropdown.appendChild(header);
-
-                // Result Items
-                results.forEach((m, idx) => {
-                    const isCurrent = (m.movie_id === activeMovieId);
-                    const div = document.createElement('div');
-                    div.className = `search-item ${isCurrent ? 'active-item' : ''}`;
-                    div.dataset.index = idx;
-                    div.dataset.id = m.movie_id;
-
-                    const genreBadges = m.genres
-                        ? m.genres.split(',').slice(0, 3).map(g => `<span class="badge bg-light text-secondary border me-1" style="font-size: 0.72rem;">${g.trim()}</span>`).join('')
-                        : '';
-
-                    const ratingBadge = m.avg_rating
-                        ? `<span class="badge border font-mono fw-semibold" style="background: #fffbeb; color: #b45309; border-color: #fde68a !important;"><i class="ti ti-star-filled text-warning me-1"></i>${m.avg_rating.toFixed(2)}</span>`
-                        : '';
-
-                    div.innerHTML = `
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="movie-icon-box">
-                                <i class="ti ti-movie fs-5"></i>
-                            </div>
-                            <div>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="text-dark fw-semibold">${m.title}</span>
-                                    <span class="text-secondary small font-mono">(${m.release_year || 'N/A'})</span>
-                                    ${isCurrent ? '<span class="badge bg-primary text-white" style="font-size: 0.68rem;">Active</span>' : ''}
+            searchDebounce = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/movies/search/?q=${encodeURIComponent(q)}`);
+                    const data = await res.json();
+                    const results = data.results || [];
+                    searchDropdown.innerHTML = '';
+                    if (results.length === 0) {
+                        searchDropdown.innerHTML = '<div class="p-3 text-muted small">No matching movies found</div>';
+                    } else {
+                        results.forEach(m => {
+                            const div = document.createElement('div');
+                            div.className = 'search-item';
+                            div.innerHTML = `
+                                <div>
+                                    <span class="fw-semibold text-dark">${m.title}</span>
+                                    <small class="text-muted ms-1 font-mono">(${m.release_year || 'N/A'})</small>
                                 </div>
-                                <div class="d-flex flex-wrap gap-1 mt-1">
-                                    ${genreBadges}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            ${ratingBadge}
-                            <span class="text-muted small d-block font-mono mt-1">#${m.movie_id}</span>
-                        </div>
-                    `;
-
-                    div.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        selectMovie(m.movie_id, m.title);
-                    });
-                    searchDropdown.appendChild(div);
-                });
-            }
-
-            searchDropdown.style.display = 'block';
-        }
-
-        async function fetchMovies(query = '') {
-            const q = query.trim();
-            const isBenchmark = !q;
-            setSearchLoading(true);
-            try {
-                const res = await fetch(`/api/movies/search/?q=${encodeURIComponent(q)}`);
-                const data = await res.json();
-                renderSearchResults(data.results || [], q, isBenchmark);
-            } catch (err) {
-                console.error("Autocomplete search failure:", err);
-            } finally {
-                setSearchLoading(false);
-            }
-        }
-
-        function highlightMovieItem(items, index) {
-            items.forEach((item, idx) => {
-                if (idx === index) {
-                    item.classList.add('highlighted');
-                    item.scrollIntoView({ block: 'nearest' });
-                } else {
-                    item.classList.remove('highlighted');
+                                <span class="badge font-mono" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;">#${m.movie_id}</span>
+                            `;
+                            div.onclick = () => selectMovie(m.movie_id, m.title);
+                            searchDropdown.appendChild(div);
+                        });
+                    }
+                    searchDropdown.style.display = 'block';
+                } catch (e) {
+                    console.error("Autocomplete failure:", e);
                 }
-            });
-        }
-
-        // Search Input Events
-        if (searchInput) {
-            // Focus: show suggestions immediately
-            searchInput.addEventListener('focus', () => {
-                fetchMovies(searchInput.value);
-            });
-
-            // Live Input Debounce
-            searchInput.addEventListener('input', () => {
-                updateClearBtn();
-                clearTimeout(searchDebounce);
-                searchDebounce = setTimeout(() => {
-                    fetchMovies(searchInput.value);
-                }, 200);
-            });
-
-            // Keyboard Navigation (Arrow keys, Enter, Esc)
-            searchInput.addEventListener('keydown', (e) => {
-                const items = searchDropdown.querySelectorAll('.search-item');
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (searchDropdown.style.display === 'none') {
-                        fetchMovies(searchInput.value);
-                        return;
-                    }
-                    if (items.length > 0) {
-                        highlightedMovieIdx = (highlightedMovieIdx + 1) % items.length;
-                        highlightMovieItem(items, highlightedMovieIdx);
-                    }
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (items.length > 0) {
-                        highlightedMovieIdx = (highlightedMovieIdx - 1 + items.length) % items.length;
-                        highlightMovieItem(items, highlightedMovieIdx);
-                    }
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (highlightedMovieIdx >= 0 && currentSearchResults[highlightedMovieIdx]) {
-                        const m = currentSearchResults[highlightedMovieIdx];
-                        selectMovie(m.movie_id, m.title);
-                    } else if (currentSearchResults.length > 0) {
-                        const m = currentSearchResults[0];
-                        selectMovie(m.movie_id, m.title);
-                    }
-                } else if (e.key === 'Escape') {
-                    searchDropdown.style.display = 'none';
-                    highlightedMovieIdx = -1;
-                }
-            });
-
-            searchInput.addEventListener('blur', () => {
-                setTimeout(() => {
-                    searchDropdown.style.display = 'none';
-                    highlightedMovieIdx = -1;
-                }, 150);
-            });
-        }
-
-        // Global Shortcut: '/' to focus search input
-        document.addEventListener('keydown', (e) => {
-            if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
-                e.preventDefault();
-                if (searchInput) {
-                    searchInput.focus();
-                    searchInput.select();
-                }
-            }
+            }, 250);
         });
 
-        // Clear button
-        if (btnClearSearch) {
-            btnClearSearch.addEventListener('click', () => {
-                searchInput.value = '';
-                updateClearBtn();
-                searchInput.focus();
-                fetchMovies('');
-            });
-        }
+        document.getElementById('btnClearSearch').addEventListener('click', () => {
+            searchInput.value = '';
+            searchDropdown.style.display = 'none';
+        });
 
-        // Click outside closes dropdown
         document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target) && !btnClearSearch.contains(e.target)) {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
                 searchDropdown.style.display = 'none';
-                highlightedMovieIdx = -1;
             }
         });
 
         function selectMovie(id, title) {
             activeMovieId = id;
-            if (searchInput) {
-                searchInput.value = title;
-                updateClearBtn();
-            }
-            if (searchDropdown) {
-                searchDropdown.style.display = 'none';
-                highlightedMovieIdx = -1;
-            }
-
-            // Visual feedback pulse on the Hero Title
-            const heroTitle = document.getElementById('movieHeroTitle');
-            if (heroTitle) {
-                heroTitle.classList.add('text-primary');
-                setTimeout(() => heroTitle.classList.remove('text-primary'), 400);
-            }
-
+            searchInput.value = title;
+            searchDropdown.style.display = 'none';
+            // Update active quick pick button state
+            document.querySelectorAll('.quick-pick-btn').forEach(btn => {
+                if (parseInt(btn.dataset.id) === id) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
             loadMovieDetails(id);
             loadMovieTags(id);
             loadRatingDistribution(id);
+            loadUserRating(id);
         }
 
         // Quick Pick Click Handlers
@@ -1049,40 +1489,36 @@
         });
 
         // =============================================================
-        // 10. Problem 4: Interactive Star Rating Handler
+        // 10. Problem 4: Interactive Star & Rating Controls
         // =============================================================
         const starIcons = document.querySelectorAll('#interactiveStars i');
-        const ratingSlider = document.getElementById('ratingSlider');
+        const ratingPillButtons = document.querySelectorAll('.rating-pill');
 
         starIcons.forEach(star => {
             star.addEventListener('click', () => {
-                const val = parseFloat(star.dataset.val);
-                // Toggle half-star if clicking same star again
-                if (activeRating === val) {
-                    activeRating = Math.max(0.5, val - 0.5);
-                } else {
-                    activeRating = val;
-                }
-                document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
-                if (ratingSlider) ratingSlider.value = activeRating;
-                updateStarVisuals(activeRating);
+                activeRating = parseFloat(star.dataset.val);
+                setRatingValue(activeRating);
             });
         });
 
-        if (ratingSlider) {
-            ratingSlider.addEventListener('input', (e) => {
-                activeRating = parseFloat(e.target.value);
-                document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
-                updateStarVisuals(activeRating);
+        ratingPillButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const val = parseFloat(btn.dataset.rating);
+                setRatingValue(val);
             });
+        });
+
+        function setRatingValue(val) {
+            activeRating = val;
+            document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
+            updateRatingControlVisuals(activeRating);
         }
 
-        function updateStarVisuals(rating) {
+        function updateRatingControlVisuals(rating) {
+            // Update stars
             starIcons.forEach(s => {
                 const val = parseFloat(s.dataset.val);
-                if (rating === null || rating === undefined || isNaN(rating)) {
-                    s.className = 'ti ti-star';
-                } else if (val <= rating) {
+                if (val <= rating) {
                     s.className = 'ti ti-star-filled filled';
                 } else if (val - 0.5 <= rating) {
                     s.className = 'ti ti-star-half-filled filled';
@@ -1090,12 +1526,69 @@
                     s.className = 'ti ti-star';
                 }
             });
+            // Update active pill
+            ratingPillButtons.forEach(btn => {
+                const pillVal = parseFloat(btn.dataset.rating);
+                if (Math.abs(pillVal - rating) < 0.01) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        async function loadUserRating(movieId) {
+            const userRatingLabel = document.getElementById('userRatingLabel');
+            const ratingStatusBadge = document.getElementById('ratingStatusBadge');
+            const btnSaveRating = document.getElementById('btnSaveRating');
+            const alertBox = document.getElementById('ratingAlert');
+            if (alertBox) alertBox.style.display = 'none';
+
+            if (!isUserAuthenticated) {
+                if (ratingStatusBadge) {
+                    ratingStatusBadge.textContent = 'Guest Mode';
+                    ratingStatusBadge.className = 'badge bg-light text-secondary border font-mono';
+                }
+                userRatingLabel.textContent = '🔒 Login to Rate';
+                updateRatingControlVisuals(4.0);
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/ratings/user-rating/?movie_id=${movieId}`);
+                const data = await res.json();
+                if (data.authenticated && data.has_rated) {
+                    activeRating = parseFloat(data.rating);
+                    userRatingLabel.textContent = `${activeRating.toFixed(1)} ★`;
+                    if (ratingStatusBadge) {
+                        ratingStatusBadge.textContent = 'Already Rated';
+                        ratingStatusBadge.className = 'badge bg-success-subtle text-success border border-success-subtle font-mono';
+                    }
+                    if (btnSaveRating) {
+                        btnSaveRating.innerHTML = '<i class="ti ti-edit fs-5"></i> Update Rating in PostgreSQL';
+                    }
+                    updateRatingControlVisuals(activeRating);
+                } else {
+                    activeRating = 4.0;
+                    userRatingLabel.textContent = `${activeRating.toFixed(1)} ★ (Not Yet Rated)`;
+                    if (ratingStatusBadge) {
+                        ratingStatusBadge.textContent = 'Not Rated Yet';
+                        ratingStatusBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle font-mono';
+                    }
+                    if (btnSaveRating) {
+                        btnSaveRating.innerHTML = '<i class="ti ti-device-floppy fs-5"></i> Save Rating in PostgreSQL';
+                    }
+                    updateRatingControlVisuals(activeRating);
+                }
+            } catch (err) {
+                console.error("Could not fetch user rating:", err);
+            }
         }
 
         document.getElementById('btnSaveRating').addEventListener('click', async () => {
             const alertBox = document.getElementById('ratingAlert');
             alertBox.style.display = 'block';
-            alertBox.className = 'mt-2 text-center small font-mono text-secondary';
+            alertBox.className = 'mt-2 text-center small font-mono text-muted';
             alertBox.textContent = 'Writing to PostgreSQL fact_ratings...';
 
             try {
@@ -1107,7 +1600,7 @@
                 const contentType = res.headers.get('content-type') || '';
                 if (res.status === 302 || !contentType.includes('application/json')) {
                     alertBox.className = 'mt-2 text-center small font-mono text-warning';
-                    alertBox.innerHTML = '🔒 You must be logged in. <a href="/login/" class="text-warning">Click here to login</a>.';
+                    alertBox.innerHTML = '🔒 You must be logged in. <a href="/login/" class="text-warning fw-bold">Click here to login</a>.';
                     return;
                 }
                 const data = await res.json();
@@ -1118,11 +1611,12 @@
                 }
                 if (data.success) {
                     alertBox.className = 'mt-2 text-center small font-mono text-success';
-                    alertBox.textContent = `✓ Rating of ${activeRating}★ recorded in database!`;
+                    alertBox.textContent = `✓ Rating of ${activeRating}★ recorded in database! (${data.action})`;
                     showToast(`Rating of ${activeRating}★ committed to fact_ratings!`);
-                    // Refresh movie details & distribution
+                    // Refresh movie details & distribution live
                     loadMovieDetails(activeMovieId);
                     loadRatingDistribution(activeMovieId);
+                    loadUserRating(activeMovieId);
                 } else {
                     alertBox.className = 'mt-2 text-center small font-mono text-danger';
                     alertBox.textContent = data.error || 'Failed to record rating';
@@ -1133,244 +1627,12 @@
             }
         });
 
-        // =============================================================
-        // Dynamic Release Year Searchable Autocomplete (Issue #2)
-        // =============================================================
-        let availableYears = [];
-        let highlightedYearIdx = -1;
-
-        const yearInput = document.getElementById('yearSearchInput');
-        const yearDropdown = document.getElementById('yearDropdown');
-        const btnToggleYear = document.getElementById('btnToggleYearDropdown');
-        const btnClearYear = document.getElementById('btnClearYear');
-        const yearDropdownIcon = document.getElementById('yearDropdownIcon');
-        const hiddenYearSelector = document.getElementById('yearSelector');
-
-        function renderYearDropdown(filterText = '') {
-            if (!yearDropdown) return;
-            const query = filterText.trim().toLowerCase();
-
-            // Filter options
-            const showAllTime = !query || 'overall'.includes(query) || 'all'.includes(query) || 'all-time'.includes(query);
-            let matches = [];
-            if (query && !showAllTime) {
-                matches = availableYears.filter(y => String(y).includes(query));
-            } else if (query && showAllTime) {
-                matches = availableYears.filter(y => String(y).includes(query));
-            } else {
-                matches = availableYears;
-            }
-
-            yearDropdown.innerHTML = '';
-
-            // 1. Overall (All-Time) option
-            if (showAllTime) {
-                const isAllSelected = !activeYear;
-                const allDiv = document.createElement('div');
-                allDiv.className = `search-item ${isAllSelected ? 'active-item' : ''}`;
-                allDiv.dataset.year = '';
-                allDiv.innerHTML = `
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="ti ti-infinity ${isAllSelected ? 'text-primary' : 'text-secondary'}"></i>
-                        <span>Overall (All-Time)</span>
-                    </div>
-                    ${isAllSelected ? '<span class="badge bg-primary text-white">Active</span>' : '<span class="badge bg-light text-secondary border font-mono">All</span>'}
-                `;
-                allDiv.addEventListener('mousedown', (e) => {
-                    e.preventDefault();
-                    selectYear('');
-                });
-                yearDropdown.appendChild(allDiv);
-            }
-
-            // 2. Year options
-            if (matches.length === 0 && !showAllTime) {
-                yearDropdown.innerHTML = '<div class="p-3 text-secondary small text-center">No matching release year found</div>';
-            } else {
-                matches.forEach(y => {
-                    const isSelected = String(activeYear) === String(y);
-                    const div = document.createElement('div');
-                    div.className = `search-item ${isSelected ? 'active-item' : ''}`;
-                    div.dataset.year = y;
-                    div.innerHTML = `
-                        <div class="d-flex align-items-center gap-2 font-mono">
-                            <i class="ti ti-calendar-event ${isSelected ? 'text-primary' : 'text-secondary'} small"></i>
-                            <span>${y}</span>
-                        </div>
-                        ${isSelected ? '<span class="badge bg-primary text-white">Active</span>' : '<span class="badge bg-light text-secondary border font-mono">Year</span>'}
-                    `;
-                    div.addEventListener('mousedown', (e) => {
-                        e.preventDefault();
-                        selectYear(y);
-                    });
-                    yearDropdown.appendChild(div);
-                });
-            }
-
-            highlightedYearIdx = -1;
-            yearDropdown.style.display = 'block';
-            if (yearDropdownIcon) {
-                yearDropdownIcon.className = 'ti ti-chevron-up';
-            }
-        }
-
-        function closeYearDropdown() {
-            if (yearDropdown) {
-                yearDropdown.style.display = 'none';
-            }
-            if (yearDropdownIcon) {
-                yearDropdownIcon.className = 'ti ti-chevron-down';
-            }
-            highlightedYearIdx = -1;
-        }
-
-        function selectYear(year) {
-            activeYear = year ? String(year) : '';
-            if (yearInput) {
-                yearInput.value = activeYear || 'Overall (All-Time)';
-            }
-            if (hiddenYearSelector) {
-                hiddenYearSelector.value = activeYear;
-            }
-            closeYearDropdown();
+        // Year Selector Change
+        document.getElementById('yearSelector').addEventListener('change', (e) => {
+            activeYear = e.target.value;
             loadTopMovies(activeYear);
             loadDominantGenre(activeYear || 2017);
-        }
-
-        function highlightItem(items, index) {
-            items.forEach((item, idx) => {
-                if (idx === index) {
-                    item.classList.add('highlighted');
-                    item.scrollIntoView({ block: 'nearest' });
-                } else {
-                    item.classList.remove('highlighted');
-                }
-            });
-        }
-
-        if (yearInput) {
-            yearInput.addEventListener('focus', () => {
-                yearInput.select();
-                renderYearDropdown('');
-            });
-
-            yearInput.addEventListener('input', () => {
-                renderYearDropdown(yearInput.value);
-            });
-
-            yearInput.addEventListener('keydown', (e) => {
-                const items = yearDropdown ? yearDropdown.querySelectorAll('.search-item') : [];
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    if (yearDropdown.style.display === 'none') {
-                        renderYearDropdown('');
-                        return;
-                    }
-                    if (items.length > 0) {
-                        highlightedYearIdx = (highlightedYearIdx + 1) % items.length;
-                        highlightItem(items, highlightedYearIdx);
-                    }
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    if (items.length > 0) {
-                        highlightedYearIdx = (highlightedYearIdx - 1 + items.length) % items.length;
-                        highlightItem(items, highlightedYearIdx);
-                    }
-                } else if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (highlightedYearIdx >= 0 && items[highlightedYearIdx]) {
-                        const yr = items[highlightedYearIdx].dataset.year;
-                        selectYear(yr);
-                    } else {
-                        const val = yearInput.value.trim().toLowerCase();
-                        if (!val || val === 'all' || val === 'overall' || val.includes('all-time')) {
-                            selectYear('');
-                        } else {
-                            const parsed = parseInt(val, 10);
-                            if (availableYears.includes(parsed)) {
-                                selectYear(parsed);
-                            } else {
-                                yearInput.value = activeYear || 'Overall (All-Time)';
-                                closeYearDropdown();
-                            }
-                        }
-                    }
-                } else if (e.key === 'Escape') {
-                    yearInput.value = activeYear || 'Overall (All-Time)';
-                    closeYearDropdown();
-                }
-            });
-
-            yearInput.addEventListener('blur', () => {
-                setTimeout(() => {
-                    closeYearDropdown();
-                    const val = yearInput.value.trim().toLowerCase();
-                    if (!val || val === 'all' || val === 'overall' || val.includes('all-time')) {
-                        if (activeYear !== '') selectYear('');
-                        else yearInput.value = 'Overall (All-Time)';
-                    } else {
-                        const parsed = parseInt(val, 10);
-                        if (availableYears.includes(parsed)) {
-                            if (activeYear !== String(parsed)) selectYear(parsed);
-                        } else {
-                            yearInput.value = activeYear || 'Overall (All-Time)';
-                        }
-                    }
-                }, 150);
-            });
-        }
-
-        if (btnToggleYear) {
-            btnToggleYear.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (yearDropdown.style.display === 'block') {
-                    closeYearDropdown();
-                } else {
-                    yearInput.focus();
-                    renderYearDropdown('');
-                }
-            });
-        }
-
-        if (btnClearYear) {
-            btnClearYear.addEventListener('click', () => {
-                selectYear('');
-            });
-        }
-
-        document.addEventListener('click', (e) => {
-            if (yearDropdown && !yearDropdown.contains(e.target) && !yearInput.contains(e.target) && (!btnToggleYear || !btnToggleYear.contains(e.target))) {
-                closeYearDropdown();
-            }
         });
-
-        // Dynamic Release Year Loader (Issue #2)
-        async function loadAvailableYears() {
-            try {
-                const res = await fetch('/api/analytics/available-years/');
-                const data = await res.json();
-                availableYears = data.years || [];
-
-                if (hiddenYearSelector && availableYears.length > 0) {
-                    hiddenYearSelector.innerHTML = '<option value="">Overall (All-Time)</option>';
-                    availableYears.forEach(y => {
-                        const opt = document.createElement('option');
-                        opt.value = y;
-                        opt.textContent = y;
-                        if (String(y) === String(activeYear)) {
-                            opt.selected = true;
-                        }
-                        hiddenYearSelector.appendChild(opt);
-                    });
-                }
-
-                if (yearInput) {
-                    yearInput.value = activeYear ? String(activeYear) : 'Overall (All-Time)';
-                }
-            } catch (err) {
-                console.error("Failed to load available years:", err);
-            }
-        }
 
         // Genre Pill Filters
         document.querySelectorAll('.genre-btn').forEach(btn => {
@@ -1383,6 +1645,9 @@
 
         // Initialize Everything on DOM Load
         window.addEventListener('DOMContentLoaded', async () => {
+            // Clear any lingering dark theme in localStorage
+            localStorage.removeItem('movielens-theme');
+
             const t0 = performance.now();
 
             // Load current user info for RBAC display
@@ -1393,8 +1658,11 @@
                 const roleLabel = document.getElementById('roleLabel');
                 const logoutBtn = document.getElementById('logoutBtn');
                 const loginBtn = document.getElementById('loginBtn');
+                const btnSaveRating = document.getElementById('btnSaveRating');
+                const btnLoginToRate = document.getElementById('btnLoginToRate');
 
                 if (userInfo.authenticated) {
+                    isUserAuthenticated = true;
                     usernameLabel.textContent = userInfo.username;
                     if (userInfo.is_staff) {
                         roleLabel.textContent = 'ADMIN';
@@ -1408,29 +1676,28 @@
                         roleLabel.style.border = '1px solid #bbf7d0';
                     }
                     logoutBtn.style.display = 'inline-flex';
+                    if (btnSaveRating) btnSaveRating.style.display = 'flex';
+                    if (btnLoginToRate) btnLoginToRate.style.display = 'none';
                 } else {
+                    isUserAuthenticated = false;
                     usernameLabel.textContent = 'Guest';
-                    roleLabel.textContent = 'NOT LOGGED IN';
+                    roleLabel.textContent = 'GUEST';
                     roleLabel.style.background = '#f1f5f9';
                     roleLabel.style.color = '#64748b';
                     roleLabel.style.border = '1px solid #e2e8f0';
                     loginBtn.style.display = 'inline-flex';
 
-                    // Disable rating button for guests
-                    const rateBtn = document.getElementById('btnSaveRating');
-                    if (rateBtn) {
-                        rateBtn.disabled = true;
-                        rateBtn.title = 'Please log in to rate movies';
-                        rateBtn.textContent = '🔒 Login to Rate';
-                    }
+                    // Show Clickable Login button in rating panel for guests
+                    if (btnSaveRating) btnSaveRating.style.display = 'none';
+                    if (btnLoginToRate) btnLoginToRate.style.display = 'flex';
                 }
             } catch (e) { console.warn('Could not load user info', e); }
 
             await Promise.all([
-                loadAvailableYears(),
                 loadMovieDetails(1),
                 loadMovieTags(1),
                 loadRatingDistribution(1),
+                loadUserRating(1),
                 loadTopMovies(2017),
                 loadDominantGenre(2017),
                 loadGenreTags("Action"),
