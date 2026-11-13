@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="swiss">
 <head>
+    <!-- Immediate theme detection to prevent flash of unstyled theme -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('movielens-theme') || 'swiss';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>MovieLens Analytics &bull; Swiss International Minimalist Dossier</title>
+    <title id="pageTitle">MovieLens Analytics &bull; Swiss Minimalist &amp; Forest Emerald Bento</title>
     <!-- Tailwind CSS with Forms & Container Plugins -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <!-- Tabler Icons -->
@@ -36,157 +43,14 @@
         }
       }
     </script>
-    <style>
+        <style>
         :root {
             --bg-canvas: #fafafa;
             --border-primary: #000000;
         }
-        body {
-            background-color: var(--bg-canvas);
-            color: #000000;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
         .font-mono-num {
             font-family: 'JetBrains Mono', monospace;
             font-variant-numeric: tabular-nums;
-        }
-        .swiss-box {
-            background: #ffffff;
-            border: 1.5px solid #000000;
-            box-shadow: 3px 3px 0px #000000;
-            transition: all 0.12s cubic-bezier(0, 0, 0.2, 1);
-        }
-        .swiss-box:hover {
-            box-shadow: 4px 4px 0px #000000;
-        }
-        .swiss-header {
-            padding: 8px 14px;
-            background: #000000;
-            color: #fafafa;
-            border-bottom: 1.5px solid #000000;
-        }
-        .quick-pick-btn {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
-            font-weight: 600;
-            background: #ffffff;
-            border: 1.5px solid #000000;
-            color: #000000;
-            padding: 5px 12px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            transition: background 0.1s ease, color 0.1s ease, transform 0.08s ease;
-        }
-        .quick-pick-btn:hover {
-            background: #1d4ed8;
-            color: #ffffff;
-            border-color: #1d4ed8;
-        }
-        .quick-pick-btn.active {
-            background: #000000;
-            color: #ffffff;
-            border-color: #000000;
-            box-shadow: 2px 2px 0px #1d4ed8;
-        }
-        .rating-pill {
-            padding: 6px 0;
-            font-size: 0.72rem;
-            font-weight: 700;
-            border: 1.5px solid #000000;
-            color: #000000;
-            background: #ffffff;
-            cursor: pointer;
-            transition: all 0.08s ease;
-            text-align: center;
-        }
-        .rating-pill:hover {
-            background: #e4e4e7;
-            border-color: #000000;
-        }
-        .rating-pill.active {
-            background: #000000 !important;
-            color: #ffffff !important;
-            border-color: #000000 !important;
-            box-shadow: 2px 2px 0px #1d4ed8;
-        }
-        .genre-btn {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 5px 11px;
-            background: #ffffff;
-            color: #000000;
-            border: 1.5px solid #000000;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-            transition: all 0.1s ease;
-        }
-        .genre-btn.active {
-            background: #1d4ed8;
-            color: #ffffff;
-            border-color: #1d4ed8;
-            box-shadow: 2px 2px 0px #000000;
-        }
-        .genre-btn:hover:not(.active) {
-            background: #000000;
-            color: #ffffff;
-        }
-        .star-box i {
-            transition: transform 0.1s ease, color 0.1s ease;
-        }
-        .star-box i.filled {
-            color: #000000 !important;
-        }
-        .star-box i:hover {
-            transform: scale(1.2);
-            color: #1d4ed8 !important;
-        }
-        .search-results-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: #ffffff;
-            border: 1.5px solid #000000;
-            box-shadow: 4px 4px 0px #000000;
-            max-height: 280px;
-            overflow-y: auto;
-            z-index: 1050;
-            margin-top: 4px;
-        }
-        .search-item {
-            padding: 10px 14px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #e4e4e7;
-            font-size: 0.8rem;
-            color: #000000;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .search-item:last-child { border-bottom: none; }
-        .search-item:hover, .search-item.active {
-            background: #1d4ed8;
-            color: #ffffff;
-        }
-        .toast-notify {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 2000;
-            background: #000000;
-            border: 2px solid #ffffff;
-            padding: 12px 20px;
-            color: #ffffff;
-            box-shadow: 4px 4px 0px #1d4ed8;
-            display: none;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.05em;
         }
         .chart-box {
             position: relative;
@@ -205,42 +69,519 @@
             text-transform: uppercase;
             letter-spacing: 0.12em;
         }
-        .swiss-action-btn {
+
+        /* Pulse Dot for Telemetry */
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+            animation: pulse-ring 2.4s infinite cubic-bezier(0.45, 0, 0.55, 1);
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        /* ========================================================
+           THEME 1: SWISS INTERNATIONAL MINIMALIST DOSSIER
+           ======================================================== */
+        html[data-theme="swiss"] body {
+            background-color: #fafafa;
+            background-image: none;
+            color: #000000;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        html[data-theme="swiss"] .top-metadata-strip {
+            display: flex;
+        }
+        html[data-theme="swiss"] .app-header {
+            background: #fafafa;
+            border-bottom: 2px solid #000000;
+            backdrop-filter: none;
+            box-shadow: none;
+        }
+        html[data-theme="swiss"] .swiss-box {
+            background: #ffffff;
+            border: 1.5px solid #000000;
+            box-shadow: 3px 3px 0px #000000;
+            border-radius: 0;
+            transition: all 0.12s cubic-bezier(0, 0, 0.2, 1);
+        }
+        html[data-theme="swiss"] .swiss-box:hover {
+            box-shadow: 4px 4px 0px #000000;
+            transform: none;
+        }
+        html[data-theme="swiss"] .swiss-header {
+            padding: 8px 14px;
+            background: #000000;
+            color: #fafafa;
+            border-bottom: 1.5px solid #000000;
+            border-radius: 0;
+        }
+        html[data-theme="swiss"] .telemetry-pill {
+            background: #ffffff;
+            border: 1.5px solid #000000;
+            box-shadow: 2px 2px 0px #000000;
+            border-radius: 0;
+        }
+        html[data-theme="swiss"] .quick-pick-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: #ffffff;
+            border: 1.5px solid #000000;
+            color: #000000;
+            padding: 5px 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            border-radius: 0;
+            box-shadow: none;
+            transition: background 0.1s ease, color 0.1s ease, transform 0.08s ease;
+        }
+        html[data-theme="swiss"] .quick-pick-btn:hover {
+            background: #1d4ed8;
+            color: #ffffff;
+            border-color: #1d4ed8;
+        }
+        html[data-theme="swiss"] .quick-pick-btn.active {
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
+            box-shadow: 2px 2px 0px #1d4ed8;
+        }
+        html[data-theme="swiss"] .rating-pill {
+            padding: 6px 0;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1.5px solid #000000;
+            color: #000000;
+            background: #ffffff;
+            cursor: pointer;
+            border-radius: 0;
+            transition: all 0.08s ease;
+            text-align: center;
+        }
+        html[data-theme="swiss"] .rating-pill:hover {
+            background: #e4e4e7;
+            border-color: #000000;
+        }
+        html[data-theme="swiss"] .rating-pill.active {
+            background: #000000 !important;
+            color: #ffffff !important;
+            border-color: #000000 !important;
+            box-shadow: 2px 2px 0px #1d4ed8;
+        }
+        html[data-theme="swiss"] .genre-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 5px 11px;
+            background: #ffffff;
+            color: #000000;
+            border: 1.5px solid #000000;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            border-radius: 0;
+            box-shadow: none;
+            transition: all 0.1s ease;
+        }
+        html[data-theme="swiss"] .genre-btn.active {
+            background: #1d4ed8;
+            color: #ffffff;
+            border-color: #1d4ed8;
+            box-shadow: 2px 2px 0px #000000;
+        }
+        html[data-theme="swiss"] .genre-btn:hover:not(.active) {
+            background: #000000;
+            color: #ffffff;
+        }
+        html[data-theme="swiss"] .star-box i {
+            transition: transform 0.1s ease, color 0.1s ease;
+        }
+        html[data-theme="swiss"] .star-box i.filled {
+            color: #000000 !important;
+        }
+        html[data-theme="swiss"] .star-box i:hover {
+            transform: scale(1.2);
+            color: #1d4ed8 !important;
+        }
+        html[data-theme="swiss"] .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1.5px solid #000000;
+            box-shadow: 4px 4px 0px #000000;
+            border-radius: 0;
+            max-height: 280px;
+            overflow-y: auto;
+            z-index: 1050;
+            margin-top: 4px;
+        }
+        html[data-theme="swiss"] .search-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #e4e4e7;
+            font-size: 0.8rem;
+            color: #000000;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        html[data-theme="swiss"] .search-item:last-child { border-bottom: none; }
+        html[data-theme="swiss"] .search-item:hover, html[data-theme="swiss"] .search-item.active {
+            background: #1d4ed8;
+            color: #ffffff;
+        }
+        html[data-theme="swiss"] .toast-notify {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            background: #000000;
+            border: 2px solid #ffffff;
+            padding: 12px 20px;
+            color: #ffffff;
+            box-shadow: 4px 4px 0px #1d4ed8;
+            border-radius: 0;
+            display: none;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        html[data-theme="swiss"] .swiss-action-btn {
             background: transparent;
             color: #ffffff;
             border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 0;
             padding: 2px 6px;
             font-size: 11px;
             cursor: pointer;
             transition: all 0.1s ease;
         }
-        .swiss-action-btn:hover {
+        html[data-theme="swiss"] .swiss-action-btn:hover {
             background: #1d4ed8;
             border-color: #1d4ed8;
             color: #ffffff;
         }
-        .swiss-scale-btn {
+        html[data-theme="swiss"] .swiss-scale-btn {
             font-family: 'JetBrains Mono', monospace;
             font-size: 9px;
             font-weight: 700;
             padding: 2px 7px;
             cursor: pointer;
             border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 0;
             background: transparent;
             color: #ffffff;
             transition: all 0.08s ease;
         }
-        .swiss-scale-btn.active {
+        html[data-theme="swiss"] .swiss-scale-btn.active {
             background: #ffffff;
             color: #000000;
             border-color: #ffffff;
+        }
+        html[data-theme="swiss"] .theme-switcher-box {
+            background: #ffffff;
+            border: 1.5px solid #000000;
+            box-shadow: 2px 2px 0px #000000;
+            border-radius: 0;
+        }
+        html[data-theme="swiss"] .theme-switcher-btn {
+            border-radius: 0;
+            font-family: 'JetBrains Mono', monospace;
+            color: #71717a;
+        }
+        html[data-theme="swiss"] .theme-switcher-btn.active {
+            background: #000000;
+            color: #ffffff;
+            box-shadow: 1px 1px 0px #1d4ed8;
+        }
+
+        /* ========================================================
+           THEME 2: BENTO & FOREST EMERALD EDITORIAL
+           ======================================================== */
+        html[data-theme="emerald"] body {
+            background-color: #f4f7f5;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(209, 250, 229, 0.6) 0px, transparent 48%),
+                radial-gradient(at 100% 0%, rgba(220, 252, 231, 0.5) 0px, transparent 45%),
+                radial-gradient(at 50% 50%, rgba(244, 247, 245, 0.7) 0px, transparent 100%),
+                radial-gradient(at 100% 100%, rgba(167, 243, 208, 0.35) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(229, 236, 231, 0.5) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: #064e3b;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        html[data-theme="emerald"] .top-metadata-strip {
+            display: none !important;
+        }
+        html[data-theme="emerald"] .app-header {
+            background: rgba(255, 255, 255, 0.82) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border-bottom: 1px solid rgba(209, 250, 229, 0.9) !important;
+            box-shadow: 0 1px 4px rgba(6, 78, 59, 0.03) !important;
+        }
+        html[data-theme="emerald"] .brand-logo-box {
+            border-radius: 12px !important;
+            background: #064e3b !important;
+            border: 1px solid rgba(167, 243, 208, 0.5) !important;
+            box-shadow: 0 2px 8px rgba(6, 78, 59, 0.2) !important;
+        }
+        html[data-theme="emerald"] .swiss-box {
+            background: rgba(255, 255, 255, 0.88) !important;
+            backdrop-filter: blur(16px) !important;
+            -webkit-backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(209, 250, 229, 0.85) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 4px 20px -2px rgba(6, 78, 59, 0.04), 0 2px 6px -1px rgba(6, 78, 59, 0.02) !important;
+            position: relative !important;
+            overflow: hidden !important;
+            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), 
+                        box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                        border-color 0.2s ease !important;
+        }
+        html[data-theme="emerald"] .swiss-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.95), rgba(167, 243, 208, 0.6), transparent);
+            pointer-events: none;
+        }
+        html[data-theme="emerald"] .swiss-box:hover {
+            transform: translateY(-3px) !important;
+            border-color: rgba(16, 185, 129, 0.45) !important;
+            box-shadow: 0 16px 36px -6px rgba(6, 78, 59, 0.08), 0 6px 12px -2px rgba(6, 78, 59, 0.04) !important;
+        }
+        html[data-theme="emerald"] .swiss-header {
+            padding: 12px 18px !important;
+            border-bottom: 1px solid rgba(209, 250, 229, 0.7) !important;
+            background: rgba(244, 247, 245, 0.75) !important;
+            border-radius: 18px 18px 0 0 !important;
+            color: #064e3b !important;
+        }
+        html[data-theme="emerald"] .swiss-header h3,
+        html[data-theme="emerald"] .swiss-header span {
+            color: #064e3b !important;
+        }
+        html[data-theme="emerald"] .swiss-header .bg-black,
+        html[data-theme="emerald"] .swiss-header .bg-\[\#1d4ed8\] {
+            background-color: #064e3b !important;
+            color: #ffffff !important;
+            border-radius: 6px !important;
+            border-color: transparent !important;
+        }
+        html[data-theme="emerald"] .telemetry-pill {
+            background: rgba(255, 255, 255, 0.85) !important;
+            border: 1px solid #d1fae5 !important;
+            border-radius: 9999px !important;
+            box-shadow: 0 1px 2px rgba(6, 78, 59, 0.04) !important;
+            backdrop-filter: blur(4px) !important;
+        }
+        html[data-theme="emerald"] .hero-box {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(236, 253, 245, 0.45), rgba(244, 247, 245, 0.7)) !important;
+            backdrop-filter: blur(16px) !important;
+            border: 1px solid rgba(209, 250, 229, 0.85) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 4px 20px -2px rgba(6, 78, 59, 0.04) !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        html[data-theme="emerald"] .quick-pick-btn {
+            font-size: 0.75rem !important;
+            font-weight: 500 !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            border: 1px solid #d1fae5 !important;
+            color: #34473d !important;
+            padding: 5px 12px !important;
+            border-radius: 9999px !important;
+            box-shadow: none !important;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            backdrop-filter: blur(4px) !important;
+        }
+        html[data-theme="emerald"] .quick-pick-btn:hover {
+            background: #ffffff !important;
+            color: #064e3b !important;
+            border-color: #a7f3d0 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 10px rgba(6, 78, 59, 0.06) !important;
+        }
+        html[data-theme="emerald"] .quick-pick-btn.active {
+            background: #064e3b !important;
+            color: #ffffff !important;
+            border-color: #064e3b !important;
+            box-shadow: 0 4px 12px rgba(6, 78, 59, 0.22) !important;
+        }
+        html[data-theme="emerald"] .rating-pill {
+            border-radius: 9999px !important;
+            border: 1px solid #d1fae5 !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            color: #34473d !important;
+        }
+        html[data-theme="emerald"] .rating-pill.active {
+            background: #064e3b !important;
+            color: #ffffff !important;
+            border-color: #064e3b !important;
+            box-shadow: 0 2px 8px rgba(6, 78, 59, 0.2) !important;
+        }
+        html[data-theme="emerald"] .genre-btn {
+            font-size: 0.72rem !important;
+            font-weight: 500 !important;
+            padding: 4px 11px !important;
+            border-radius: 9999px !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            color: #34473d !important;
+            border: 1px solid #d1fae5 !important;
+            box-shadow: none !important;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        html[data-theme="emerald"] .genre-btn.active {
+            background: #064e3b !important;
+            color: #ffffff !important;
+            border-color: #064e3b !important;
+            box-shadow: 0 2px 8px rgba(6, 78, 59, 0.2) !important;
+        }
+        html[data-theme="emerald"] .genre-btn:hover:not(.active) {
+            background: #ffffff !important;
+            color: #064e3b !important;
+            border-color: #a7f3d0 !important;
+            transform: translateY(-1px) !important;
+        }
+        html[data-theme="emerald"] .star-box i {
+            transition: color 0.15s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+        }
+        html[data-theme="emerald"] .star-box i.filled {
+            color: #064e3b !important;
+            filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.35)) !important;
+        }
+        html[data-theme="emerald"] .star-box i:hover {
+            transform: scale(1.24) !important;
+            color: #10b981 !important;
+        }
+        html[data-theme="emerald"] .search-results-dropdown {
+            background: rgba(255, 255, 255, 0.97) !important;
+            backdrop-filter: blur(18px) !important;
+            border: 1px solid #d1fae5 !important;
+            border-radius: 12px !important;
+            box-shadow: 0 16px 36px -4px rgba(6, 78, 59, 0.12), 0 4px 8px -2px rgba(6, 78, 59, 0.04) !important;
+            margin-top: 6px !important;
+        }
+        html[data-theme="emerald"] .search-item {
+            color: #2c3b33 !important;
+            font-family: 'Inter', sans-serif !important;
+            border-bottom: 1px solid #f4f7f5 !important;
+            padding: 10px 14px !important;
+        }
+        html[data-theme="emerald"] .search-item:hover, html[data-theme="emerald"] .search-item.active {
+            background: #ecfdf5 !important;
+            color: #064e3b !important;
+        }
+        html[data-theme="emerald"] .toast-notify {
+            background: rgba(6, 78, 59, 0.95) !important;
+            backdrop-filter: blur(12px) !important;
+            border: 1px solid rgba(167, 243, 208, 0.3) !important;
+            border-radius: 12px !important;
+            padding: 12px 20px !important;
+            color: #ecfdf5 !important;
+            box-shadow: 0 20px 40px -6px rgba(6, 78, 59, 0.35) !important;
+            font-size: 0.84rem !important;
+            font-weight: 500 !important;
+        }
+        html[data-theme="emerald"] .swiss-scale-btn {
+            border-radius: 9999px !important;
+            border: 1px solid #d1fae5 !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            color: #34473d !important;
+        }
+        html[data-theme="emerald"] .swiss-scale-btn.active {
+            background: #064e3b !important;
+            color: #ffffff !important;
+            border-color: #064e3b !important;
+        }
+        html[data-theme="emerald"] .swiss-action-btn {
+            border-radius: 6px !important;
+            border: 1px solid #d1fae5 !important;
+            background: rgba(255, 255, 255, 0.85) !important;
+            color: #064e3b !important;
+        }
+        html[data-theme="emerald"] .swiss-action-btn:hover {
+            background: #10b981 !important;
+            color: #ffffff !important;
+            border-color: #10b981 !important;
+        }
+        html[data-theme="emerald"] #btnSaveRating {
+            background: #064e3b !important;
+            color: #ffffff !important;
+            border: 1px solid #064e3b !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 14px rgba(6, 78, 59, 0.2) !important;
+        }
+        html[data-theme="emerald"] #btnSaveRating:hover {
+            background: #047857 !important;
+            border-color: #047857 !important;
+        }
+        html[data-theme="emerald"] #ratingSlider {
+            -webkit-appearance: none !important;
+            background: transparent !important;
+            border: none !important;
+        }
+        html[data-theme="emerald"] #ratingSlider::-webkit-slider-runnable-track {
+            width: 100% !important;
+            height: 7px !important;
+            cursor: pointer !important;
+            background: #d1fae5 !important;
+            border-radius: 9999px !important;
+            border: none !important;
+        }
+        html[data-theme="emerald"] #ratingSlider::-webkit-slider-thumb {
+            height: 18px !important;
+            width: 18px !important;
+            border-radius: 50% !important;
+            background: #064e3b !important;
+            border: 2px solid #ffffff !important;
+            box-shadow: 0 2px 6px rgba(6, 78, 59, 0.35) !important;
+            cursor: pointer !important;
+            -webkit-appearance: none !important;
+            margin-top: -5.5px !important;
+            transition: transform 0.15s ease, background 0.15s ease !important;
+        }
+        html[data-theme="emerald"] #ratingSlider::-webkit-slider-thumb:hover {
+            transform: scale(1.18) !important;
+            background: #10b981 !important;
+        }
+        html[data-theme="emerald"] .theme-switcher-box {
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid #d1fae5;
+            border-radius: 9999px;
+            box-shadow: 0 1px 3px rgba(6, 78, 59, 0.05);
+            backdrop-filter: blur(8px);
+        }
+        html[data-theme="emerald"] .theme-switcher-btn {
+            border-radius: 9999px;
+            font-family: 'Inter', sans-serif;
+            color: #648872;
+        }
+        html[data-theme="emerald"] .theme-switcher-btn.active {
+            background: #064e3b;
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(6, 78, 59, 0.2);
         }
     </style>
 </head>
 <body class="min-h-screen text-black bg-[#fafafa] flex flex-col selection:bg-black selection:text-white">
 
 <!-- Top Swiss Structural Metadata Strip -->
-<div class="w-full bg-black text-[#fafafa] border-b-2 border-black overflow-hidden py-1 px-4 text-[10px] font-mono uppercase tracking-widest flex items-center justify-between">
+<div class="top-metadata-strip w-full bg-black text-[#fafafa] border-b-2 border-black overflow-hidden py-1 px-4 text-[10px] font-mono uppercase tracking-widest flex items-center justify-between">
     <div class="flex items-center gap-4">
         <span class="bg-[#1d4ed8] text-white px-1.5 py-0.2 font-bold">[SYS:DS5003-V3]</span>
         <span class="hidden md:inline">SWISS TYPOGRAPHIC ARCHIVAL MATRIX &bull; IIT PALAKKAD DATA ENGINEERING CORE</span>
@@ -253,11 +594,11 @@
 </div>
 
 <!-- Top Main Navigation Bar (Architectural Brutalism) -->
-<header class="sticky top-0 z-50 bg-[#fafafa] border-b-2 border-black">
+<header class="sticky top-0 z-50 bg-[#fafafa] border-b-2 border-black app-header transition-all">
     <div class="max-w-[1720px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
         <!-- Brand Block -->
         <div class="flex items-center gap-3.5">
-            <div class="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-black text-lg border-2 border-black">
+            <div class="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-black text-lg border-2 border-black brand-logo-box transition-all">
                 ML
             </div>
             <div>
@@ -271,32 +612,44 @@
 
         <!-- Live Telemetry Pill Bar -->
         <div class="hidden xl:flex items-center gap-2 font-mono text-[11px]">
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+            <div class="telemetry-pill flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000] transition-all">
                 <span class="font-bold text-neutral-500">RATINGS:</span>
                 <span class="font-black text-black">33,832,162</span>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+            <div class="telemetry-pill flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000] transition-all">
                 <span class="font-bold text-neutral-500">TITLES:</span>
                 <span class="font-black text-black">86,537</span>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+            <div class="telemetry-pill flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000] transition-all">
                 <span class="font-bold text-neutral-500">GENOME:</span>
                 <span class="font-black text-black">18.4M</span>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
-                <span class="w-2 h-2 bg-[#1d4ed8]"></span>
+            <div class="telemetry-pill flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000] transition-all">
+                <span class="pulse-dot mr-1"></span>
                 <span class="font-bold text-neutral-500">ENGINE:</span>
                 <span class="font-black text-black">PG-16 ACTIVE</span>
             </div>
-            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+            <div class="telemetry-pill flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000] transition-all">
                 <i class="ti ti-activity text-[#1d4ed8]"></i>
                 <span class="font-bold text-neutral-500">LATENCY:</span>
                 <span class="font-black text-black font-mono-num" id="globalLatency">0.0 ms</span>
             </div>
         </div>
 
-        <!-- Auth / Session Identifier (Brutalist Pill) -->
+        <!-- Theme Switcher Segmented Control -->
         <div class="flex items-center gap-2">
+            <div class="theme-switcher-box inline-flex items-center p-1" id="themeSwitcher">
+                <button type="button" onclick="setTheme('swiss')" id="themeBtnSwiss" class="theme-switcher-btn px-2.5 py-1 text-xs font-bold uppercase transition flex items-center gap-1.5" title="Swiss Brutalist Minimalist Dossier">
+                    <i class="ti ti-square"></i>
+                    <span class="hidden sm:inline">SWISS</span>
+                </button>
+                <button type="button" onclick="setTheme('emerald')" id="themeBtnEmerald" class="theme-switcher-btn px-2.5 py-1 text-xs font-bold uppercase transition flex items-center gap-1.5" title="Bento &amp; Forest Emerald Editorial">
+                    <i class="ti ti-leaf"></i>
+                    <span class="hidden sm:inline">EMERALD</span>
+                </button>
+            </div>
+
+        <!-- Auth / Session Identifier -->
             <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black text-xs shadow-[2px_2px_0px_#000000]" id="userBadge">
                 <span class="w-2 h-2 bg-black"></span>
                 <span class="font-mono font-bold uppercase tracking-tight text-black" id="usernameLabel">Guest</span>
@@ -761,9 +1114,26 @@
         gray200: '#e4e4e7',
         border: '#000000',
         grid: '#e4e4e7',
-        textDark: '#000000'
+        textDark: '#000000',
+        textMuted: '#71717a'
     };
 
+    // Bento & Forest Emerald Editorial Palette
+    const EMERALD_PALETTE = {
+        forestDeep: '#064e3b',     // Primary deep Forest Emerald (#064e3b)
+        forestMedium: '#065f46',   // Mid forest
+        emeraldVibrant: '#10b981', // Vibrant emerald highlight
+        emeraldSoft: '#34d399',    // Sage-emerald light
+        sageDark: '#3f5749',       // Architectural deep sage
+        sageMedium: '#648872',     // Balanced neutral sage
+        sageLight: '#a7f3d0',      // Soft emerald sage tint
+        sageBackground: '#e5ece7', // Neutral demarcation
+        grid: 'rgba(16, 185, 129, 0.12)',
+        textMuted: '#4e6d5a',
+        textDark: '#064e3b'
+    };
+
+    let currentTheme = localStorage.getItem('movielens-theme') || 'swiss';
     const charts = {};
     const chartScales = {
         chartRatingDist: 'linear',
@@ -775,19 +1145,28 @@
     let isUserAuthenticated = false;
     let cachedGenreTags = null;
 
-    // Global Chart.js Swiss typography overrides
-    Chart.defaults.font.family = "'JetBrains Mono', monospace";
-    Chart.defaults.font.size = 10;
-    Chart.defaults.color = '#000000';
-    Chart.defaults.borderColor = SWISS_PALETTE.grid;
-    Chart.defaults.plugins.tooltip.backgroundColor = '#000000';
-    Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
-    Chart.defaults.plugins.tooltip.bodyColor = '#ffffff';
-    Chart.defaults.plugins.tooltip.borderColor = '#ffffff';
-    Chart.defaults.plugins.tooltip.borderWidth = 1;
-    Chart.defaults.plugins.tooltip.padding = 8;
-    Chart.defaults.plugins.tooltip.boxPadding = 4;
-    Chart.defaults.plugins.tooltip.usePointStyle = true;
+    function getPalette() {
+        return currentTheme === 'emerald' ? EMERALD_PALETTE : SWISS_PALETTE;
+    }
+
+    // Configure global Chart.js defaults
+    function updateChartDefaults() {
+        const isEmerald = (currentTheme === 'emerald');
+        const p = getPalette();
+        Chart.defaults.font.family = "'JetBrains Mono', monospace";
+        Chart.defaults.font.size = 10;
+        Chart.defaults.color = isEmerald ? p.textMuted : '#000000';
+        Chart.defaults.borderColor = p.grid;
+        Chart.defaults.plugins.tooltip.backgroundColor = isEmerald ? p.forestDeep : '#000000';
+        Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+        Chart.defaults.plugins.tooltip.bodyColor = '#ffffff';
+        Chart.defaults.plugins.tooltip.borderColor = isEmerald ? p.emeraldVibrant : '#ffffff';
+        Chart.defaults.plugins.tooltip.borderWidth = 1;
+        Chart.defaults.plugins.tooltip.padding = 8;
+        Chart.defaults.plugins.tooltip.boxPadding = 4;
+        Chart.defaults.plugins.tooltip.usePointStyle = true;
+    }
+    updateChartDefaults();
 
     function renderChart(canvasId, config) {
         if (charts[canvasId]) {
@@ -845,14 +1224,12 @@
         const chart = charts[chartId];
         if (!chart) return;
 
-        // Update button visual states
         const parent = btn.parentElement;
         if (parent) {
             parent.querySelectorAll('.swiss-scale-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
 
-        // Apply scale change to y-axis
         if (chart.options.scales && chart.options.scales.y) {
             chart.options.scales.y.type = scaleType;
             if (scaleType === 'logarithmic') {
@@ -864,6 +1241,140 @@
             }
             chart.update();
             showToast(`SCALE ADJUSTMENT: ${chartId.toUpperCase()} SET TO ${scaleType.toUpperCase()}`);
+        }
+    }
+
+    // Dynamic Theme Switching Engine
+    function setTheme(theme, updateCharts = true) {
+        currentTheme = theme;
+        localStorage.setItem('movielens-theme', theme);
+        document.documentElement.setAttribute('data-theme', theme);
+
+        // Update document title
+        const pageTitle = document.getElementById('pageTitle');
+        if (pageTitle) {
+            pageTitle.textContent = (theme === 'emerald') ?
+                'MovieLens Analytics • Bento & Forest Emerald Editorial' :
+                'MovieLens Analytics • Swiss International Minimalist Dossier';
+        }
+
+        // Update Theme Switcher Button State
+        const btnSwiss = document.getElementById('themeBtnSwiss');
+        const btnEmerald = document.getElementById('themeBtnEmerald');
+        if (btnSwiss && btnEmerald) {
+            if (theme === 'emerald') {
+                btnEmerald.classList.add('active');
+                btnSwiss.classList.remove('active');
+            } else {
+                btnSwiss.classList.add('active');
+                btnEmerald.classList.remove('active');
+            }
+        }
+
+        updateChartDefaults();
+
+        if (updateCharts) {
+            applyThemeToCharts(theme);
+            showToast(`THEME ACTIVATED: ${theme.toUpperCase()} PALETTE`);
+        }
+    }
+
+    function applyThemeToCharts(theme) {
+        const isEmerald = (theme === 'emerald');
+        const p = getPalette();
+
+        // 1. Chart 3(a): Tags
+        if (charts['chartTags']) {
+            const c = charts['chartTags'];
+            c.data.datasets.forEach(ds => {
+                ds.backgroundColor = isEmerald ? p.forestDeep : p.black;
+                ds.hoverBackgroundColor = isEmerald ? p.emeraldVibrant : p.cobalt;
+                ds.borderColor = isEmerald ? p.forestDeep : p.black;
+                ds.borderRadius = isEmerald ? 6 : 0;
+            });
+            if (c.options.scales && c.options.scales.x) c.options.scales.x.grid.color = p.grid;
+            c.update();
+        }
+
+        // 2. Chart 3(d): Rating Dist
+        if (charts['chartRatingDist']) {
+            const c = charts['chartRatingDist'];
+            c.data.datasets.forEach(ds => {
+                ds.backgroundColor = isEmerald ? p.sageDark : p.black;
+                ds.hoverBackgroundColor = isEmerald ? p.forestDeep : p.cobalt;
+                ds.borderColor = isEmerald ? p.sageDark : p.black;
+                ds.borderRadius = isEmerald ? 6 : 0;
+            });
+            if (c.options.scales && c.options.scales.y) c.options.scales.y.grid.color = p.grid;
+            c.update();
+        }
+
+        // 3. Chart 3(b): Top Movies
+        if (charts['chartTopMovies']) {
+            const c = charts['chartTopMovies'];
+            c.data.datasets.forEach(ds => {
+                ds.backgroundColor = isEmerald ? p.forestDeep : p.black;
+                ds.borderColor = isEmerald ? p.forestDeep : p.black;
+                ds.borderRadius = isEmerald ? 6 : 0;
+            });
+            if (c.options.scales && c.options.scales.x) c.options.scales.x.grid.color = p.grid;
+            c.update();
+        }
+
+        // 4. Chart 3(f): Dominant Genre
+        if (charts['chartDominantGenre']) {
+            const c = charts['chartDominantGenre'];
+            c.data.datasets.forEach(ds => {
+                if (isEmerald) {
+                    ds.backgroundColor = ['#064e3b', '#065f46', '#047857', '#10b981', '#34d399', '#6ee7b7'];
+                    ds.borderColor = '#064e3b';
+                } else {
+                    ds.backgroundColor = ['#000000', '#18181b', '#27272a', '#3f3f46', '#52525b', '#71717a'];
+                    ds.borderColor = '#000000';
+                }
+                ds.borderRadius = isEmerald ? 6 : 0;
+            });
+            if (c.options.scales && c.options.scales.y) c.options.scales.y.grid.color = p.grid;
+            c.update();
+        }
+
+        // 5. Chart 3(c): Genre Tags
+        if (charts['chartGenreTags']) {
+            const c = charts['chartGenreTags'];
+            c.data.datasets.forEach(ds => {
+                ds.backgroundColor = isEmerald ? p.emeraldVibrant : p.cobalt;
+                ds.hoverBackgroundColor = isEmerald ? p.forestDeep : p.black;
+                ds.borderColor = isEmerald ? p.forestDeep : p.black;
+                ds.borderRadius = isEmerald ? 6 : 0;
+            });
+            if (c.options.scales && c.options.scales.x) c.options.scales.x.grid.color = p.grid;
+            c.update();
+        }
+
+        // 6. Chart 3(g): Coverage
+        if (charts['chartGenreCoverage']) {
+            const c = charts['chartGenreCoverage'];
+            c.data.datasets.forEach(ds => {
+                ds.backgroundColor = isEmerald ?
+                    [p.forestDeep, p.emeraldVibrant, p.sageDark, p.forestMedium, '#cddbd2', '#e5ece7', '#a7f3d0'] :
+                    [p.black, p.cobalt, p.gray800, p.gray600, p.gray400, '#d4d4d8', '#e4e4e7'];
+                ds.borderColor = isEmerald ? '#ffffff' : '#000000';
+                ds.borderWidth = isEmerald ? 3 : 2;
+            });
+            c.update();
+        }
+
+        // 7. Chart 3(e): Total Ratings Volume
+        if (charts['chartRatingsVolume']) {
+            const c = charts['chartRatingsVolume'];
+            c.data.datasets.forEach(ds => {
+                ds.backgroundColor = isEmerald ? p.forestDeep : p.black;
+                ds.hoverBackgroundColor = isEmerald ? p.emeraldVibrant : p.cobalt;
+                ds.borderColor = isEmerald ? p.forestDeep : p.black;
+                ds.borderRadius = isEmerald ? 6 : 0;
+            });
+            if (c.options.scales && c.options.scales.y) c.options.scales.y.grid.color = p.grid;
+            c.update();
         }
     }
 
@@ -921,7 +1432,10 @@
             genresContainer.innerHTML = '';
             (d.genres || []).forEach(g => {
                 const span = document.createElement('span');
-                span.className = 'text-xs font-mono font-bold uppercase px-3 py-1 bg-black text-white';
+                const isEmerald = (currentTheme === 'emerald');
+                span.className = isEmerald ? 
+                    'text-xs font-mono font-medium px-3 py-1 rounded-full bg-white/90 text-forest-900 border border-emerald-100 shadow-sm' :
+                    'text-xs font-mono font-bold uppercase px-3 py-1 bg-black text-white';
                 span.textContent = g;
                 genresContainer.appendChild(span);
             });
@@ -962,7 +1476,6 @@
                 emptyBox.classList.remove('flex');
             }
 
-            // Rescale dynamically on tightly clustered scores
             const scores = tags.map(t => t.relevance);
             const minScore = scores.length ? Math.min(...scores) : 0;
             let xMin = 0;
@@ -974,16 +1487,20 @@
                 xMin = Math.max(0, Math.floor((minScore - 0.05) * 10) / 10);
             }
 
+            const isEmerald = (currentTheme === 'emerald');
+            const p = getPalette();
+
             renderChart('chartTags', {
                 type: 'bar',
                 data: {
                     labels: tags.map(t => t.tag.toUpperCase()),
                     datasets: [{
                         data: tags.map(t => t.relevance),
-                        backgroundColor: SWISS_PALETTE.black,
-                        hoverBackgroundColor: SWISS_PALETTE.cobalt,
+                        backgroundColor: isEmerald ? p.forestDeep : p.black,
+                        hoverBackgroundColor: isEmerald ? p.emeraldVibrant : p.cobalt,
                         borderWidth: 1.5,
-                        borderColor: SWISS_PALETTE.black,
+                        borderColor: isEmerald ? p.forestDeep : p.black,
+                        borderRadius: isEmerald ? 6 : 0,
                         barPercentage: 0.65
                     }]
                 },
@@ -1003,12 +1520,12 @@
                         x: {
                             min: xMin,
                             max: 1.0,
-                            grid: { color: SWISS_PALETTE.grid },
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                            grid: { color: p.grid },
+                            ticks: { font: { size: 10, weight: 'bold' } }
                         },
                         y: {
                             grid: { display: false },
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                            ticks: { font: { size: 10, weight: 'bold' } }
                         }
                     }
                 }
@@ -1030,6 +1547,8 @@
             const totalVotes = dist.reduce((sum, d) => sum + (d.count || 0), 0);
 
             const scaleType = chartScales['chartRatingDist'] || 'linear';
+            const isEmerald = (currentTheme === 'emerald');
+            const p = getPalette();
 
             renderChart('chartRatingDist', {
                 type: 'bar',
@@ -1038,9 +1557,10 @@
                     datasets: [{
                         label: 'Votes',
                         data: dist.map(d => d.count),
-                        backgroundColor: SWISS_PALETTE.black,
-                        hoverBackgroundColor: SWISS_PALETTE.cobalt,
-                        borderColor: SWISS_PALETTE.black,
+                        backgroundColor: isEmerald ? p.sageDark : p.black,
+                        hoverBackgroundColor: isEmerald ? p.forestDeep : p.cobalt,
+                        borderColor: isEmerald ? p.sageDark : p.black,
+                        borderRadius: isEmerald ? 6 : 0,
                         borderWidth: 1.5,
                         barPercentage: 0.72
                     }]
@@ -1063,15 +1583,14 @@
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                            ticks: { font: { size: 10, weight: 'bold' } }
                         },
                         y: {
                             type: scaleType,
                             beginAtZero: true,
-                            grid: { color: SWISS_PALETTE.grid },
+                            grid: { color: p.grid },
                             ticks: {
                                 font: { size: 10, weight: 'bold' },
-                                color: '#000000',
                                 callback: v => v >= 1000 ? (v / 1000) + 'k' : v
                             }
                         }
@@ -1098,7 +1617,10 @@
             const movies = data.movies || [];
             const scores = movies.map(m => m.avg_rating);
             const minScore = scores.length ? Math.min(...scores) : 3.5;
-            const xMin = Math.max(0, Math.floor((minScore - 0.2) * 2) / 2);
+            let xMin = Math.max(0, Math.floor((minScore - 0.2) * 2) / 2);
+
+            const isEmerald = (currentTheme === 'emerald');
+            const p = getPalette();
 
             renderChart('chartTopMovies', {
                 type: 'bar',
@@ -1106,11 +1628,11 @@
                     labels: movies.map(m => m.title.length > 28 ? m.title.substring(0, 26) + '...' : m.title),
                     datasets: [{
                         data: movies.map(m => m.avg_rating),
-                        backgroundColor: SWISS_PALETTE.black,
-                        hoverBackgroundColor: SWISS_PALETTE.cobalt,
-                        borderColor: SWISS_PALETTE.black,
+                        backgroundColor: isEmerald ? p.forestDeep : p.black,
+                        borderColor: isEmerald ? p.forestDeep : p.black,
+                        borderRadius: isEmerald ? 6 : 0,
                         borderWidth: 1.5,
-                        barPercentage: 0.65
+                        barPercentage: 0.62
                     }]
                 },
                 options: {
@@ -1130,16 +1652,15 @@
                         x: {
                             min: xMin,
                             max: 5.0,
-                            grid: { color: SWISS_PALETTE.grid },
+                            grid: { color: p.grid },
                             ticks: { 
                                 font: { size: 10, weight: 'bold' }, 
-                                color: '#000000',
                                 callback: (v) => v.toFixed(1) + '★'
                             }
                         },
                         y: {
                             grid: { display: false },
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                            ticks: { font: { size: 10, weight: 'bold' } }
                         }
                     }
                 }
@@ -1168,6 +1689,9 @@
 
             const allGenres = data.all_genres || [];
             const topGenres = allGenres.slice(0, 8);
+            const isEmerald = (currentTheme === 'emerald');
+            const p = getPalette();
+
             renderChart('chartDominantGenre', {
                 type: 'bar',
                 data: {
@@ -1175,13 +1699,19 @@
                     datasets: [{
                         data: topGenres.map(g => g.count),
                         backgroundColor: topGenres.map((g, idx) => {
-                            if (idx === 0) return SWISS_PALETTE.black;
-                            if (idx === 1) return SWISS_PALETTE.cobalt;
-                            if (idx === 2) return SWISS_PALETTE.gray800;
-                            if (idx === 3) return SWISS_PALETTE.gray600;
-                            return SWISS_PALETTE.gray400;
+                            if (isEmerald) {
+                                const colors = ['#064e3b', '#065f46', '#047857', '#10b981', '#34d399', '#6ee7b7'];
+                                return colors[idx % colors.length];
+                            } else {
+                                if (idx === 0) return SWISS_PALETTE.black;
+                                if (idx === 1) return SWISS_PALETTE.cobalt;
+                                if (idx === 2) return SWISS_PALETTE.gray800;
+                                if (idx === 3) return SWISS_PALETTE.gray600;
+                                return SWISS_PALETTE.gray400;
+                            }
                         }),
-                        borderColor: SWISS_PALETTE.black,
+                        borderColor: isEmerald ? '#064e3b' : SWISS_PALETTE.black,
+                        borderRadius: isEmerald ? 6 : 0,
                         borderWidth: 1.5,
                         barPercentage: 0.65
                     }]
@@ -1198,12 +1728,11 @@
                         }
                     },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } },
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } },
                         y: {
-                            grid: { color: SWISS_PALETTE.grid },
+                            grid: { color: p.grid },
                             ticks: {
                                 font: { size: 10, weight: 'bold' },
-                                color: '#000000',
                                 callback: v => v >= 1000 ? (v / 1000) + 'k' : v
                             }
                         }
@@ -1272,6 +1801,9 @@
                 emptyBox.classList.remove('flex');
             }
 
+            const isEmerald = (currentTheme === 'emerald');
+            const p = getPalette();
+
             renderChart('chartGenreTags', {
                 type: 'bar',
                 data: {
@@ -1279,8 +1811,10 @@
                     datasets: [{
                         label: 'Frequency',
                         data: tags.map(t => t.count),
-                        backgroundColor: SWISS_PALETTE.cobalt,
-                        borderColor: SWISS_PALETTE.black,
+                        backgroundColor: isEmerald ? p.emeraldVibrant : p.cobalt,
+                        hoverBackgroundColor: isEmerald ? p.forestDeep : p.black,
+                        borderColor: isEmerald ? p.forestDeep : p.black,
+                        borderRadius: isEmerald ? 6 : 0,
                         borderWidth: 1.5,
                         barPercentage: 0.65
                     }]
@@ -1299,14 +1833,13 @@
                     },
                     scales: {
                         x: { 
-                            grid: { color: SWISS_PALETTE.grid }, 
+                            grid: { color: p.grid }, 
                             ticks: { 
-                                font: { size: 10, weight: 'bold' }, 
-                                color: '#000000',
+                                font: { size: 10, weight: 'bold' },
                                 callback: v => v >= 1000 ? (v / 1000) + 'k' : v
                             } 
                         },
-                        y: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } }
+                        y: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' } } }
                     }
                 }
             });
@@ -1324,6 +1857,8 @@
             const data = await res.json();
             document.getElementById('coverageLatency').textContent = `${data.latency_ms} MS`;
             const cov = data.coverage || [];
+            const isEmerald = (currentTheme === 'emerald');
+            const p = getPalette();
 
             renderChart('chartGenreCoverage', {
                 type: 'doughnut',
@@ -1331,18 +1866,25 @@
                     labels: cov.slice(0, 8).map(c => c.genre.toUpperCase()),
                     datasets: [{
                         data: cov.slice(0, 8).map(c => c.coverage_pct),
-                        backgroundColor: [
+                        backgroundColor: isEmerald ? [
+                            p.forestDeep,
+                            p.emeraldVibrant,
+                            p.sageDark,
+                            p.forestMedium,
+                            '#cddbd2',
+                            '#e5ece7',
+                            '#a7f3d0'
+                        ] : [
                             SWISS_PALETTE.black,
                             SWISS_PALETTE.cobalt,
                             SWISS_PALETTE.gray600,
                             SWISS_PALETTE.gray400,
                             SWISS_PALETTE.gray200,
                             '#d4d4d8',
-                            '#e4e4e7',
-                            '#f4f4f5'
+                            '#e4e4e7'
                         ],
-                        borderColor: SWISS_PALETTE.black,
-                        borderWidth: 2
+                        borderColor: isEmerald ? '#ffffff' : SWISS_PALETTE.black,
+                        borderWidth: isEmerald ? 3 : 2
                     }]
                 },
                 options: {
@@ -1352,7 +1894,7 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { boxWidth: 10, font: { size: 9, weight: 'bold' }, color: '#000000' }
+                            labels: { boxWidth: 10, font: { size: 9, weight: 'bold' } }
                         },
                         tooltip: {
                             callbacks: {
@@ -1378,6 +1920,8 @@
             const dist = data.distribution || [];
             const totalTitles = dist.reduce((sum, d) => sum + (d.count || 0), 0);
             const scaleType = chartScales['chartRatingsVolume'] || 'linear';
+            const isEmerald = (currentTheme === 'emerald');
+            const p = getPalette();
 
             renderChart('chartRatingsVolume', {
                 type: 'bar',
@@ -1386,9 +1930,10 @@
                     datasets: [{
                         label: 'Titles',
                         data: dist.map(d => d.count),
-                        backgroundColor: SWISS_PALETTE.black,
-                        hoverBackgroundColor: SWISS_PALETTE.cobalt,
-                        borderColor: SWISS_PALETTE.black,
+                        backgroundColor: isEmerald ? p.forestDeep : p.black,
+                        hoverBackgroundColor: isEmerald ? p.emeraldVibrant : p.cobalt,
+                        borderColor: isEmerald ? p.forestDeep : p.black,
+                        borderRadius: isEmerald ? 6 : 0,
                         borderWidth: 1.5,
                         barPercentage: 0.72
                     }]
@@ -1411,15 +1956,14 @@
                     scales: {
                         x: {
                             grid: { display: false },
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                            ticks: { font: { size: 10, weight: 'bold' } }
                         },
                         y: {
                             type: scaleType,
                             beginAtZero: true,
-                            grid: { color: SWISS_PALETTE.grid },
+                            grid: { color: p.grid },
                             ticks: {
                                 font: { size: 10, weight: 'bold' },
-                                color: '#000000',
                                 callback: v => v >= 1000 ? (v / 1000) + 'k' : v
                             }
                         }
@@ -1527,7 +2071,6 @@
         searchInput.value = title;
         searchDropdown.style.display = 'none';
 
-        // Update active quick pick button state
         document.querySelectorAll('.quick-pick-btn').forEach(btn => {
             if (parseInt(btn.dataset.id) === id) {
                 btn.classList.add('active');
@@ -1542,7 +2085,6 @@
         loadUserRating(id);
     }
 
-    // Quick Pick Click Handlers
     document.querySelectorAll('.quick-pick-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = parseInt(btn.dataset.id);
@@ -1610,7 +2152,6 @@
                 }
                 showToast(`STATUS: RATING COMMITTED TO FACT_RATINGS IN ${latency} MS`);
 
-                // Instantly refresh movie stats and distribution
                 loadMovieDetails(activeMovieId);
                 loadRatingDistribution(activeMovieId);
             } else {
@@ -1637,7 +2178,6 @@
         });
     });
 
-    // Helper: CSRF Cookie Extractor
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -1658,6 +2198,9 @@
     // =============================================================
     window.addEventListener('DOMContentLoaded', async () => {
         const t0 = performance.now();
+
+        // Initialize active theme
+        setTheme(currentTheme, false);
 
         // Load current user session info for RBAC display
         try {
