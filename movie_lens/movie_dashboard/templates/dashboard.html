@@ -855,6 +855,13 @@
         // Apply scale change to y-axis
         if (chart.options.scales && chart.options.scales.y) {
             chart.options.scales.y.type = scaleType;
+            if (scaleType === 'logarithmic') {
+                delete chart.options.scales.y.beginAtZero;
+                chart.options.scales.y.min = 1;
+            } else {
+                chart.options.scales.y.beginAtZero = true;
+                delete chart.options.scales.y.min;
+            }
             chart.update();
             showToast(`SCALE ADJUSTMENT: ${chartId.toUpperCase()} SET TO ${scaleType.toUpperCase()}`);
         }
@@ -1114,6 +1121,7 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
+                                title: (items) => movies[items[0].dataIndex].title,
                                 label: (ctx) => ` MEAN: ${ctx.parsed.x.toFixed(2)} ★ (${movies[ctx.dataIndex].total_ratings.toLocaleString()} ratings)`
                             }
                         }
@@ -1123,7 +1131,11 @@
                             min: xMin,
                             max: 5.0,
                             grid: { color: SWISS_PALETTE.grid },
-                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                            ticks: { 
+                                font: { size: 10, weight: 'bold' }, 
+                                color: '#000000',
+                                callback: (v) => v.toFixed(1) + '★'
+                            }
                         },
                         y: {
                             grid: { display: false },
@@ -1145,36 +1157,56 @@
             const res = await fetch(`/api/analytics/dominant-genre/?year=${year}`);
             const data = await res.json();
             document.getElementById('dominantLatency').textContent = `${data.latency_ms} MS`;
-            document.getElementById('dominantGenreTitle').textContent = data.dominant_genre || 'N/A';
-            document.getElementById('dominantGenreCount').textContent = (data.movie_count || 0).toLocaleString();
+
+            const dominant = data.dominant || {};
+            const dominantGenre = dominant.genre || data.dominant_genre || 'N/A';
+            const dominantCount = dominant.count !== undefined ? dominant.count : (data.movie_count || 0);
+
+            document.getElementById('dominantGenreTitle').textContent = dominantGenre;
+            document.getElementById('dominantGenreCount').textContent = dominantCount.toLocaleString();
             document.getElementById('dominantYearPill').textContent = year;
 
             const allGenres = data.all_genres || [];
+            const topGenres = allGenres.slice(0, 8);
             renderChart('chartDominantGenre', {
                 type: 'bar',
                 data: {
-                    labels: allGenres.map(g => g.genre.toUpperCase()),
+                    labels: topGenres.map(g => g.genre.toUpperCase()),
                     datasets: [{
-                        data: allGenres.map(g => g.count),
-                        backgroundColor: allGenres.map((g, idx) => {
+                        data: topGenres.map(g => g.count),
+                        backgroundColor: topGenres.map((g, idx) => {
                             if (idx === 0) return SWISS_PALETTE.black;
-                            if (idx === 1) return SWISS_PALETTE.gray800;
-                            if (idx === 2) return SWISS_PALETTE.gray600;
-                            if (idx === 3) return SWISS_PALETTE.gray400;
-                            return SWISS_PALETTE.gray200;
+                            if (idx === 1) return SWISS_PALETTE.cobalt;
+                            if (idx === 2) return SWISS_PALETTE.gray800;
+                            if (idx === 3) return SWISS_PALETTE.gray600;
+                            return SWISS_PALETTE.gray400;
                         }),
                         borderColor: SWISS_PALETTE.black,
                         borderWidth: 1.5,
-                        barPercentage: 0.7
+                        barPercentage: 0.65
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` TITLES: ${ctx.parsed.y.toLocaleString()}`
+                            }
+                        }
+                    },
                     scales: {
                         x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } },
-                        y: { grid: { color: SWISS_PALETTE.grid }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } }
+                        y: {
+                            grid: { color: SWISS_PALETTE.grid },
+                            ticks: {
+                                font: { size: 10, weight: 'bold' },
+                                color: '#000000',
+                                callback: v => v >= 1000 ? (v / 1000) + 'k' : v
+                            }
+                        }
                     }
                 }
             });
@@ -1257,9 +1289,23 @@
                     indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` FREQUENCY: ${ctx.parsed.x.toLocaleString()} TAGS`
+                            }
+                        }
+                    },
                     scales: {
-                        x: { grid: { color: SWISS_PALETTE.grid }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } },
+                        x: { 
+                            grid: { color: SWISS_PALETTE.grid }, 
+                            ticks: { 
+                                font: { size: 10, weight: 'bold' }, 
+                                color: '#000000',
+                                callback: v => v >= 1000 ? (v / 1000) + 'k' : v
+                            } 
+                        },
                         y: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } }
                     }
                 }
@@ -1310,7 +1356,7 @@
                         },
                         tooltip: {
                             callbacks: {
-                                label: (ctx) => ` COVERAGE: ${ctx.parsed}%`
+                                label: (ctx) => ` COVERAGE: ${ctx.parsed}% (${cov[ctx.dataIndex].movie_count.toLocaleString()} TITLES)`
                             }
                         }
                     }
@@ -1330,6 +1376,7 @@
             const data = await res.json();
             document.getElementById('volumeLatency').textContent = `${data.latency_ms} MS`;
             const dist = data.distribution || [];
+            const totalTitles = dist.reduce((sum, d) => sum + (d.count || 0), 0);
             const scaleType = chartScales['chartRatingsVolume'] || 'linear';
 
             renderChart('chartRatingsVolume', {
@@ -1353,7 +1400,11 @@
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: (ctx) => ` TITLES: ${ctx.parsed.y.toLocaleString()}`
+                                label: (ctx) => {
+                                    const val = ctx.parsed.y;
+                                    const pct = totalTitles > 0 ? ((val / totalTitles) * 100).toFixed(1) : 0;
+                                    return ` TITLES: ${val.toLocaleString()} (${pct}%)`;
+                                }
                             }
                         }
                     },
@@ -1510,6 +1561,17 @@
         star.addEventListener('click', () => {
             const score = parseFloat(star.dataset.val);
             setRatingValue(score);
+        });
+        star.addEventListener('mouseenter', () => {
+            const hoverVal = parseFloat(star.dataset.val);
+            starIcons.forEach((s, idx) => {
+                s.className = (idx + 1 <= hoverVal) ? 'ti ti-star-filled filled' : 'ti ti-star';
+            });
+            const readout = document.getElementById('sliderScaleReadout');
+            if (readout) readout.textContent = RATING_DESCRIPTORS[hoverVal] || `${hoverVal.toFixed(1)} / 5.0`;
+        });
+        star.addEventListener('mouseleave', () => {
+            setRatingValue(activeRating);
         });
     });
 
