@@ -203,7 +203,7 @@
         <div class="section-header">
             <span class="badge-pill badge-blue">Data Modeling Layer</span>
             <h2>1. The Dimensional Star Schema (Clean ER Model)</h2>
-            <p>Shows how the 32M ratings fact table connects to normalized dimensions. Notice the clean 1NF bridge table for multi-genre movies.</p>
+            <p>Shows how the 33.8M ratings fact table connects to normalized dimensions. Notice the clean 1NF bridge table for multi-genre movies.</p>
         </div>
 
         <div class="mermaid-container">
@@ -286,7 +286,7 @@ erDiagram
             <div class="step-card">
                 <div class="step-number">CONCEPT 1</div>
                 <div class="step-title">The Central Fact Table</div>
-                <p class="step-desc"><code>fact_ratings</code> stores 32M numerical transactions. It contains only numbers (IDs, dates, ratings) to keep storage compact (3.7 GB).</p>
+                <p class="step-desc"><code>fact_ratings</code> stores 33.8M numerical transactions. It contains only numbers (IDs, dates, ratings) to keep storage compact (3.7 GB).</p>
             </div>
             <div class="step-card">
                 <div class="step-number">CONCEPT 2</div>
@@ -296,7 +296,7 @@ erDiagram
             <div class="step-card">
                 <div class="step-number">CONCEPT 3</div>
                 <div class="step-title">Precomputed Materialized Views</div>
-                <p class="step-desc"><code>mv_movie_rating_stats</code> pre-aggregates 32M ratings down to 84k rows, reducing leaderboard query times from 18 seconds to 0.6 ms.</p>
+                <p class="step-desc"><code>mv_movie_rating_stats</code> pre-aggregates 33.8M ratings down to 86k rows, reducing leaderboard query times from 18 seconds to 0.6 ms.</p>
             </div>
         </div>
     </section>
@@ -341,7 +341,7 @@ flowchart LR
     end
 
     subgraph LANE5["5. PostgreSQL Storage"]
-        DB_FACT["fact_ratings<br/>(32M rows / 3.7GB)"]
+        DB_FACT["fact_ratings<br/>(33.8M rows / 3.7GB)"]
         DB_TAGS["fact_tags<br/>(2M rows / 210MB)"]
         DB_DIMS["Dimensions<br/>(Movies, Genres, Date)"]
     end

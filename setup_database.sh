@@ -1,12 +1,28 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# MovieLens 32M OLAP Platform - Database & Environment Setup Script
+# MovieLens OLAP Platform - Database & Environment Setup Script
 # ==============================================================================
 # This script automates database setup, dataset unzipping, schema initialization,
 # ETL streaming ingestion, materialized views creation, and verification tests.
+# Exclusively configured for the MovieLens ml-latest dataset (includes genome scores).
 # ==============================================================================
 
 set -eo pipefail
+
+# Argument Parsing
+RESET_DB=false
+for arg in "$@"; do
+    case "$arg" in
+        --reset|--clean|-r|--drop-existing)
+            RESET_DB=true
+            ;;
+        --help|-h)
+            echo "Usage: ./setup_database.sh [--reset]"
+            echo "  --reset   Drop and recreate the database before running ETL from scratch"
+            exit 0
+            ;;
+    esac
+done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$SCRIPT_DIR"
@@ -21,7 +37,8 @@ BOLD="\033[1m"
 NC="\033[0m" # No Color
 
 echo -e "${BLUE}${BOLD}=================================================================${NC}"
-echo -e "${BLUE}${BOLD}  MovieLens 32M OLAP Intelligence Platform - Database Setup     ${NC}"
+echo -e "${BLUE}${BOLD}  MovieLens OLAP Intelligence Platform - Database Setup          ${NC}"
+echo -e "${BLUE}${BOLD}                (Dataset: MovieLens ml-latest)                   ${NC}"
 echo -e "${BLUE}${BOLD}=================================================================${NC}"
 
 # 1. Load Environment Configuration
@@ -84,6 +101,18 @@ if command -v pg_isready >/dev/null 2>&1; then
     fi
 fi
 
+if [ "$RESET_DB" = true ]; then
+    echo -e "\n${YELLOW}${BOLD}[Reset Mode] Dropping database '$DB_NAME' and recreating from scratch...${NC}"
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c "DROP DATABASE IF EXISTS $DB_NAME WITH (FORCE);" >/dev/null 2>&1 || \
+    sudo -u postgres psql -c "DROP DATABASE IF EXISTS $DB_NAME WITH (FORCE);" >/dev/null 2>&1 || true
+
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d postgres -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" >/dev/null 2>&1 || \
+    sudo -u postgres psql -c "CREATE DATABASE $DB_NAME OWNER $DB_USER;" >/dev/null 2>&1 || true
+
+    rm -f "$MOVIE_LENS_DIR/db.sqlite3"
+    echo -e "${GREEN}✓ Fresh empty database '$DB_NAME' created.${NC}"
+fi
+
 if ! psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c '\q' >/dev/null 2>&1; then
     echo -e "${RED}✖ Cannot connect to database '$DB_NAME' as user '$DB_USER'.${NC}"
     echo -e "${YELLOW}The PostgreSQL user or database has not been created yet.${NC}"
@@ -102,26 +131,28 @@ fi
 echo -e "${GREEN}✓ Successfully connected to PostgreSQL ($DB_NAME as $DB_USER)!${NC}"
 
 # 4. Check Dataset Files
-echo -e "\n${BLUE}[3/7] Checking MovieLens 32M CSV Dataset...${NC}"
-if [ ! -d "$MOVIE_LENS_DIR/ml-32m" ] || [ ! -f "$MOVIE_LENS_DIR/ml-32m/movies.csv" ]; then
-    if [ -f "$MOVIE_LENS_DIR/ml-32m.zip" ]; then
-        echo -e "${YELLOW}Found $MOVIE_LENS_DIR/ml-32m.zip. Unzipping dataset...${NC}"
-        unzip -q "$MOVIE_LENS_DIR/ml-32m.zip" -d "$MOVIE_LENS_DIR/"
-        echo -e "${GREEN}✓ Unzipped ml-32m.zip successfully.${NC}"
-    elif [ -f "$ROOT_DIR/ml-32m.zip" ]; then
-        echo -e "${YELLOW}Found $ROOT_DIR/ml-32m.zip. Unzipping dataset...${NC}"
-        unzip -q "$ROOT_DIR/ml-32m.zip" -d "$MOVIE_LENS_DIR/"
-        echo -e "${GREEN}✓ Unzipped ml-32m.zip successfully.${NC}"
-    else
-        echo -e "${RED}✖ Dataset not found in $MOVIE_LENS_DIR/ml-32m/${NC}"
-        echo -e "${YELLOW}Please download the MovieLens 32M dataset and place it in movie_lens/:${NC}"
-        echo -e "  cd movie_lens"
-        echo -e "  curl -O https://files.grouplens.org/datasets/movielens/ml-32m.zip"
-        echo -e "  unzip ml-32m.zip"
-        exit 1
-    fi
+echo -e "\n${BLUE}[3/7] Checking MovieLens ml-latest CSV Dataset...${NC}"
+DATASET_RESOLVED=""
+if [ -d "$MOVIE_LENS_DIR/ml-latest" ] && [ -f "$MOVIE_LENS_DIR/ml-latest/movies.csv" ] && [ -f "$MOVIE_LENS_DIR/ml-latest/genome-scores.csv" ]; then
+    DATASET_RESOLVED="$MOVIE_LENS_DIR/ml-latest"
+elif [ -f "$ROOT_DIR/ml-latest.zip" ]; then
+    echo -e "${YELLOW}Found $ROOT_DIR/ml-latest.zip. Unzipping dataset into movie_lens/...${NC}"
+    unzip -q "$ROOT_DIR/ml-latest.zip" -d "$MOVIE_LENS_DIR/"
+    DATASET_RESOLVED="$MOVIE_LENS_DIR/ml-latest"
+    echo -e "${GREEN}✓ Unzipped ml-latest.zip successfully.${NC}"
+elif [ -f "$MOVIE_LENS_DIR/ml-latest.zip" ]; then
+    echo -e "${YELLOW}Found $MOVIE_LENS_DIR/ml-latest.zip. Unzipping dataset into movie_lens/...${NC}"
+    unzip -q "$MOVIE_LENS_DIR/ml-latest.zip" -d "$MOVIE_LENS_DIR/"
+    DATASET_RESOLVED="$MOVIE_LENS_DIR/ml-latest"
+    echo -e "${GREEN}✓ Unzipped ml-latest.zip successfully.${NC}"
+else
+    echo -e "${RED}✖ ml-latest dataset not found in $MOVIE_LENS_DIR/ml-latest/ or $ROOT_DIR/ml-latest.zip${NC}"
+    echo -e "${YELLOW}Please ensure ml-latest.zip is placed at:${NC}"
+    echo -e "  $ROOT_DIR/ml-latest.zip"
+    echo -e "${YELLOW}(Only ml-latest is used because it provides genome-scores.csv and genome-tags.csv).${NC}"
+    exit 1
 fi
-echo -e "${GREEN}✓ Dataset confirmed (movies.csv, ratings.csv, tags.csv found).${NC}"
+echo -e "${GREEN}✓ ml-latest dataset confirmed at $DATASET_RESOLVED (all 6 CSVs found including genome scores).${NC}"
 
 # 5. Initialize Schema
 echo -e "\n${BLUE}[4/7] Applying Relational Star Schema (schema.sql)...${NC}"
@@ -131,7 +162,11 @@ echo -e "${GREEN}✓ Schema initialized (tables created or verified).${NC}"
 # 6. Run Streaming ETL Ingestion
 echo -e "\n${BLUE}[5/7] Running High-Speed Ingestion Pipeline (etl_pipeline.py)...${NC}"
 echo -e "${YELLOW}Note: If tables are already populated, ETL will automatically skip them.${NC}"
-(cd "$MOVIE_LENS_DIR" && "$PYTHON_BIN" etl_pipeline.py)
+ETL_ARGS=""
+if [ "$RESET_DB" = true ]; then
+    ETL_ARGS="--reset"
+fi
+(cd "$MOVIE_LENS_DIR" && "$PYTHON_BIN" etl_pipeline.py $ETL_ARGS)
 echo -e "${GREEN}✓ Ingestion verified.${NC}"
 
 # 7. Apply Performance Optimization & Materialized Views

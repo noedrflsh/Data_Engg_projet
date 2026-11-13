@@ -276,6 +276,29 @@ def api_submit_rating(request):
     })
 
 
+def api_get_user_rating(request):
+    """
+    Returns the authenticated user's current rating for a specified movie.
+    Used by dashboard UI to display the user's existing rating and allow modification.
+    """
+    if not request.user.is_authenticated:
+        return JsonResponse({'authenticated': False, 'rating': None, 'has_rated': False})
+
+    movie_id = request.GET.get('movie_id')
+    try:
+        movie_id = int(movie_id)
+    except (ValueError, TypeError):
+        return JsonResponse({'error': 'Invalid movie_id'}, status=400)
+
+    rating = analytics.get_user_movie_rating(request.user.id, movie_id)
+    return JsonResponse({
+        'authenticated': True,
+        'movie_id': movie_id,
+        'has_rated': rating is not None,
+        'rating': rating
+    })
+
+
 def api_current_user(request):
     """Returns current logged-in user info for the dashboard UI."""
     if request.user.is_authenticated:
@@ -291,7 +314,7 @@ def api_current_user(request):
 def api_user_movie_rating(request):
     """Returns the current logged-in user's rating for a specific movie."""
     if not request.user.is_authenticated:
-        return JsonResponse({'authenticated': False, 'user_rating': None})
+        return JsonResponse({'authenticated': False, 'user_rating': None, 'rating': None, 'has_rated': False})
     movie_id = request.GET.get('movie_id')
     if not movie_id:
         return JsonResponse({'error': 'movie_id is required'}, status=400)
@@ -304,6 +327,8 @@ def api_user_movie_rating(request):
     return JsonResponse({
         'authenticated': True,
         'movie_id': movie_id,
-        'user_rating': user_rating
+        'user_rating': user_rating,
+        'rating': user_rating,
+        'has_rated': user_rating is not None
     })
 
