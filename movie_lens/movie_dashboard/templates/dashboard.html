@@ -1,1712 +1,1679 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MovieLens Analytics &bull; IIT Palakkad</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>MovieLens Analytics &bull; Swiss International Minimalist Dossier</title>
+    <!-- Tailwind CSS with Forms & Container Plugins -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <!-- Tabler Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter (Swiss Neo-Grotesque), Newsreader (Editorial Numerals), JetBrains Mono (Precision Tabular) -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              canvas: '#fafafa',
+              black: '#000000',
+              ink: '#0a0a0a',
+              cobalt: '#1d4ed8',
+              'cobalt-dark': '#1e40af',
+              hairline: '#18181b',
+              muted: '#71717a'
+            },
+            fontFamily: {
+              sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Helvetica Neue', 'Arial', 'sans-serif'],
+              serif: ['Newsreader', 'Georgia', 'serif'],
+              mono: ['JetBrains Mono', 'Menlo', 'monospace']
+            }
+          }
+        }
+      }
+    </script>
     <style>
         :root {
-            --bg-canvas: #f8fafc;
-            --bg-card: #ffffff;
-            --bg-subtle: #f1f5f9;
-            --border-subtle: #e2e8f0;
-            --border-hover: #cbd5e1;
-            --border-focus: #4f46e5;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #64748b;
-            --accent-indigo: #4f46e5;
-            --accent-amber: #d97706;
-            --accent-emerald: #059669;
-            --accent-rose: #e11d48;
-            --accent-blue: #2563eb;
-            --accent-purple: #7c3aed;
-            --card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
-            --card-shadow-hover: 0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
-            --pill-bg: #f8fafc;
-            --pill-border: #e2e8f0;
-            --pill-color: #334155;
-            --chart-grid: #f1f5f9;
-            --chart-tick: #64748b;
+            --bg-canvas: #fafafa;
+            --border-primary: #000000;
         }
-
         body {
             background-color: var(--bg-canvas);
-            color: var(--text-primary);
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            letter-spacing: -0.015em;
+            color: #000000;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
             -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
         }
-
-        .font-mono {
+        .font-mono-num {
             font-family: 'JetBrains Mono', monospace;
             font-variant-numeric: tabular-nums;
         }
-
-        /* Top Navigation Header */
-        .app-navbar {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(14px);
-            border-bottom: 1px solid var(--border-subtle);
-            position: sticky;
-            top: 0;
-            z-index: 1020;
-            box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03);
-        }
-
-        .brand-badge {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background: #4f46e5;
-            color: #ffffff;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.25rem;
-        }
-
-        .brand-text {
-            color: var(--text-primary);
-            font-size: 0.95rem;
-            letter-spacing: -0.02em;
-        }
-        .brand-sub {
-            color: var(--text-muted);
-            font-size: 0.72rem;
-        }
-
-        /* Telemetry Metric Badges */
-        .header-metric {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 5px 12px;
-            border-radius: 8px;
+        .swiss-box {
             background: #ffffff;
-            border: 1px solid var(--border-subtle);
-            font-size: 0.76rem;
-            color: var(--text-secondary);
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+            border: 1.5px solid #000000;
+            box-shadow: 3px 3px 0px #000000;
+            transition: all 0.12s cubic-bezier(0, 0, 0.2, 1);
         }
-        .header-metric strong {
-            color: var(--text-primary);
-            font-weight: 600;
+        .swiss-box:hover {
+            box-shadow: 4px 4px 0px #000000;
         }
-
-        .pulse-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: #10b981;
-            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-            animation: pulse-ring 2s infinite;
+        .swiss-header {
+            padding: 8px 14px;
+            background: #000000;
+            color: #fafafa;
+            border-bottom: 1.5px solid #000000;
         }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-
-        /* User Profile Pill */
-        .user-badge-container {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 11px;
-            border-radius: 8px;
-            background: #ffffff;
-            border: 1px solid var(--border-subtle);
-            font-size: 0.78rem;
-            color: var(--text-primary);
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-        }
-        .role-badge {
-            font-size: 0.68rem;
-            font-weight: 700;
-            padding: 2px 7px;
-            border-radius: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .btn-nav-primary {
-            background: #0f172a;
-            color: #ffffff !important;
-            border: 1px solid #0f172a;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            padding: 5px 13px;
-            font-weight: 600;
-            transition: all 0.15s ease;
-        }
-        .btn-nav-primary:hover {
-            background: #1e293b;
-            border-color: #1e293b;
-        }
-        .btn-nav-secondary {
-            background: #ffffff;
-            color: var(--text-secondary) !important;
-            border: 1px solid var(--border-subtle);
-            border-radius: 8px;
-            font-size: 0.78rem;
-            padding: 5px 12px;
-            font-weight: 500;
-            transition: all 0.15s ease;
-        }
-        .btn-nav-secondary:hover {
-            background: #f8fafc;
-            color: var(--text-primary) !important;
-            border-color: var(--border-hover);
-        }
-
-        /* Modern Card Panels */
-        .panel {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 14px;
-            box-shadow: var(--card-shadow);
-            position: relative;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            overflow: hidden;
-        }
-        .panel:hover {
-            border-color: var(--border-hover);
-            box-shadow: var(--card-shadow-hover);
-        }
-        .panel-header {
-            padding: 15px 20px;
-            border-bottom: 1px solid var(--border-subtle);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #ffffff;
-        }
-        .panel-title {
-            font-size: 0.90rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            letter-spacing: -0.01em;
-        }
-        .panel-body {
-            padding: 20px;
-        }
-
-        /* Badges */
-        .badge-latency {
-            font-size: 0.72rem;
-            font-weight: 600;
-            padding: 3px 8px;
-            border-radius: 6px;
-            background: #f0fdf4;
-            color: #16a34a;
-            border: 1px solid #bbf7d0;
-        }
-        .badge-question {
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;
-            background: #eff6ff;
-            color: #2563eb;
-            border: 1px solid #bfdbfe;
-        }
-
-        /* Editorial Movie Hero Banner */
-        .movie-hero {
-            background: #ffffff;
-            border: 1px solid var(--border-subtle);
-            border-top: 3px solid #4f46e5;
-            border-radius: 16px;
-            padding: 24px 28px;
-            box-shadow: var(--card-shadow);
-            position: relative;
-        }
-        .badge-movie-id {
-            background: #eef2ff;
-            color: #4338ca;
-            border: 1px solid #e0e7ff;
-            border-radius: 6px;
-            padding: 3px 9px;
-            font-size: 0.74rem;
-            font-weight: 700;
-        }
-        .badge-movie-year {
-            background: #f1f5f9;
-            color: #334155;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            padding: 3px 9px;
-            font-size: 0.74rem;
-            font-weight: 600;
-        }
-        .movie-hero-title {
-            font-size: 1.85rem;
-            font-weight: 800;
-            letter-spacing: -0.025em;
-            color: var(--text-primary);
-            line-height: 1.2;
-        }
-        .movie-genre-tag {
-            font-size: 0.76rem;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 8px;
-            background: #f8fafc;
-            color: #334155;
-            border: 1px solid #e2e8f0;
-            transition: all 0.15s ease;
-        }
-        .movie-genre-tag:hover {
-            border-color: #cbd5e1;
-            background: #f1f5f9;
-        }
-
-        /* Hero Stats Cards */
-        .hero-stats-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 16px;
-        }
-        .hero-stat-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 14px 20px;
-            min-width: 175px;
-            text-align: right;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-        }
-        .hero-stat-label {
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--text-muted);
-            display: block;
-            margin-bottom: 4px;
-        }
-        .hero-stat-value {
-            font-size: 1.75rem;
-            font-weight: 800;
-            font-family: 'JetBrains Mono', monospace;
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 6px;
-            line-height: 1.1;
-        }
-        .hero-stat-sub {
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-muted);
-        }
-        .hero-stat-hint {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            display: block;
-            margin-top: 4px;
-        }
-
-        /* Quick Pick Pills */
         .quick-pick-btn {
-            font-size: 0.76rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
             font-weight: 600;
             background: #ffffff;
-            border: 1px solid var(--border-subtle);
-            color: var(--text-secondary);
+            border: 1.5px solid #000000;
+            color: #000000;
             padding: 5px 12px;
-            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.15s ease;
-            display: inline-flex;
-            align-items: center;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            transition: background 0.1s ease, color 0.1s ease, transform 0.08s ease;
         }
         .quick-pick-btn:hover {
-            background: #f8fafc;
-            color: var(--accent-indigo);
-            border-color: #cbd5e1;
-            transform: translateY(-1px);
+            background: #1d4ed8;
+            color: #ffffff;
+            border-color: #1d4ed8;
         }
         .quick-pick-btn.active {
-            background: #0f172a;
+            background: #000000;
             color: #ffffff;
-            border-color: #0f172a;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
+            border-color: #000000;
+            box-shadow: 2px 2px 0px #1d4ed8;
         }
-
-        /* Autocomplete Dropdown */
+        .rating-pill {
+            padding: 6px 0;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1.5px solid #000000;
+            color: #000000;
+            background: #ffffff;
+            cursor: pointer;
+            transition: all 0.08s ease;
+            text-align: center;
+        }
+        .rating-pill:hover {
+            background: #e4e4e7;
+            border-color: #000000;
+        }
+        .rating-pill.active {
+            background: #000000 !important;
+            color: #ffffff !important;
+            border-color: #000000 !important;
+            box-shadow: 2px 2px 0px #1d4ed8;
+        }
+        .genre-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 5px 11px;
+            background: #ffffff;
+            color: #000000;
+            border: 1.5px solid #000000;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            transition: all 0.1s ease;
+        }
+        .genre-btn.active {
+            background: #1d4ed8;
+            color: #ffffff;
+            border-color: #1d4ed8;
+            box-shadow: 2px 2px 0px #000000;
+        }
+        .genre-btn:hover:not(.active) {
+            background: #000000;
+            color: #ffffff;
+        }
+        .star-box i {
+            transition: transform 0.1s ease, color 0.1s ease;
+        }
+        .star-box i.filled {
+            color: #000000 !important;
+        }
+        .star-box i:hover {
+            transform: scale(1.2);
+            color: #1d4ed8 !important;
+        }
         .search-results-dropdown {
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
             background: #ffffff;
-            border: 1px solid var(--border-subtle);
-            border-radius: 10px;
-            box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.12), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
-            max-height: 320px;
+            border: 1.5px solid #000000;
+            box-shadow: 4px 4px 0px #000000;
+            max-height: 280px;
             overflow-y: auto;
             z-index: 1050;
-            margin-top: 6px;
+            margin-top: 4px;
         }
         .search-item {
-            padding: 11px 16px;
+            padding: 10px 14px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid #f1f5f9;
-            transition: background 0.12s ease;
+            border-bottom: 1px solid #e4e4e7;
+            font-size: 0.8rem;
+            color: #000000;
+            font-family: 'JetBrains Mono', monospace;
         }
         .search-item:last-child { border-bottom: none; }
-        .search-item:hover {
-            background: #f8fafc;
-        }
-
-        /* Interactive Rating Box (Problem 4) */
-        .rating-interactive-box {
-            background: #f8fafc;
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            padding: 16px;
-        }
-        .star-box {
-            display: inline-flex;
-            gap: 8px;
-            font-size: 1.85rem;
-            color: #cbd5e1;
-            cursor: pointer;
-        }
-        .star-box i {
-            transition: color 0.15s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .star-box i.filled {
-            color: #f59e0b;
-        }
-        .star-box i:hover {
-            transform: scale(1.22);
-            color: #fbbf24;
-        }
-
-        /* Rating Pills Grid */
-        .rating-pills-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
-            margin-top: 8px;
-        }
-        .rating-pill {
-            padding: 6px 4px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            border-radius: 7px;
-            border: 1px solid var(--border-subtle);
-            color: var(--text-secondary);
-            background: #ffffff;
-            cursor: pointer;
-            transition: all 0.12s ease;
-            text-align: center;
-        }
-        .rating-pill:hover {
-            background: #f1f5f9;
-            color: var(--text-primary);
-            border-color: var(--border-hover);
-        }
-        .rating-pill.active {
-            background: #0f172a !important;
-            color: #ffffff !important;
-            border-color: #0f172a !important;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
-        }
-
-        .btn-action-rating {
-            background: #0f172a;
-            color: #ffffff !important;
-            border: 1px solid #0f172a;
-            border-radius: 9px;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
-            transition: all 0.15s ease;
-            font-size: 0.90rem;
-        }
-        .btn-action-rating:hover {
-            background: #1e293b;
-            border-color: #1e293b;
-            transform: translateY(-1px);
-        }
-
-        /* Genre Filter Pills */
-        .genre-btn {
-            font-size: 0.76rem;
-            font-weight: 600;
-            padding: 5px 12px;
-            border-radius: 8px;
-            background: #ffffff;
-            color: var(--text-secondary);
-            border: 1px solid var(--border-subtle);
-            cursor: pointer;
-            transition: all 0.15s ease;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-        }
-        .genre-btn.active {
-            background: #0f172a;
+        .search-item:hover, .search-item.active {
+            background: #1d4ed8;
             color: #ffffff;
-            border-color: #0f172a;
-            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.2);
         }
-        .genre-btn:hover:not(.active) {
-            background: #f8fafc;
-            color: var(--text-primary);
-            border-color: var(--border-hover);
-        }
-
-        /* Form Inputs */
-        .form-control, .form-select {
-            background-color: #ffffff;
-            border: 1px solid var(--border-subtle);
-            color: var(--text-primary);
-            font-size: 0.88rem;
-            border-radius: 8px;
-        }
-        .form-control:focus, .form-select:focus {
-            background-color: #ffffff;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
-            color: var(--text-primary);
-        }
-
-        /* Chart Canvas wrapper */
-        .chart-box {
-            position: relative;
-            width: 100%;
-            height: 260px;
-        }
-        .chart-box-lg {
-            position: relative;
-            width: 100%;
-            height: 330px;
-        }
-
-        /* Toast Notifications */
         .toast-notify {
             position: fixed;
             bottom: 24px;
             right: 24px;
             z-index: 2000;
-            background: #0f172a;
-            border: 1px solid #1e293b;
-            border-radius: 10px;
+            background: #000000;
+            border: 2px solid #ffffff;
             padding: 12px 20px;
             color: #ffffff;
-            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+            box-shadow: 4px 4px 0px #1d4ed8;
             display: none;
-            font-size: 0.88rem;
-            font-weight: 500;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+        .chart-box {
+            position: relative;
+            width: 100%;
+            height: 255px;
+        }
+        .chart-box-lg {
+            position: relative;
+            width: 100%;
+            height: 320px;
+        }
+        .swiss-grid-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+        .swiss-action-btn {
+            background: transparent;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 2px 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.1s ease;
+        }
+        .swiss-action-btn:hover {
+            background: #1d4ed8;
+            border-color: #1d4ed8;
+            color: #ffffff;
+        }
+        .swiss-scale-btn {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 7px;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: transparent;
+            color: #ffffff;
+            transition: all 0.08s ease;
+        }
+        .swiss-scale-btn.active {
+            background: #ffffff;
+            color: #000000;
+            border-color: #ffffff;
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen text-black bg-[#fafafa] flex flex-col selection:bg-black selection:text-white">
 
-    <!-- Executive Top Navbar -->
-    <header class="app-navbar py-2 px-4">
-        <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div class="d-flex align-items-center gap-3">
-                <span class="brand-badge">
-                    <i class="ti ti-chart-dots"></i>
-                </span>
-                <div>
-                    <h6 class="mb-0 fw-bold brand-text">MovieLens Analytics</h6>
-                    <small class="brand-sub">DS5003 Data Engineering Lab &bull; IIT Palakkad</small>
-                </div>
+<!-- Top Swiss Structural Metadata Strip -->
+<div class="w-full bg-black text-[#fafafa] border-b-2 border-black overflow-hidden py-1 px-4 text-[10px] font-mono uppercase tracking-widest flex items-center justify-between">
+    <div class="flex items-center gap-4">
+        <span class="bg-[#1d4ed8] text-white px-1.5 py-0.2 font-bold">[SYS:DS5003-V3]</span>
+        <span class="hidden md:inline">SWISS TYPOGRAPHIC ARCHIVAL MATRIX &bull; IIT PALAKKAD DATA ENGINEERING CORE</span>
+    </div>
+    <div class="flex items-center gap-3">
+        <span>COORDINATE: 10.7870&deg; N, 76.6548&deg; E</span>
+        <span class="text-neutral-400">|</span>
+        <span class="text-white font-bold">GRID REF: 01-INDEX</span>
+    </div>
+</div>
+
+<!-- Top Main Navigation Bar (Architectural Brutalism) -->
+<header class="sticky top-0 z-50 bg-[#fafafa] border-b-2 border-black">
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+        <!-- Brand Block -->
+        <div class="flex items-center gap-3.5">
+            <div class="w-10 h-10 bg-black text-white flex items-center justify-center font-mono font-black text-lg border-2 border-black">
+                ML
             </div>
-
-            <!-- OLAP Database Telemetry -->
-            <div class="d-none d-xl-flex align-items-center gap-2 font-mono">
-                <div class="header-metric">
-                    <i class="ti ti-database text-primary"></i>
-                    <span>Ratings: <strong>33,832,162</strong></span>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-lg font-black tracking-tighter uppercase leading-none text-black">MovieLens Analytics</h1>
+                    <span class="text-[9px] font-mono font-bold tracking-widest uppercase px-1.5 py-0.5 bg-black text-white">3NF STRICT</span>
                 </div>
-                <div class="header-metric">
-                    <i class="ti ti-film text-success"></i>
-                    <span>Movies: <strong>86,537</strong></span>
-                </div>
-                <div class="header-metric">
-                    <i class="ti ti-dna text-info"></i>
-                    <span>Genome: <strong>18.4M</strong></span>
-                </div>
-                <div class="header-metric">
-                    <span class="pulse-dot"></span>
-                    <span>PostgreSQL 16: <strong>Online</strong></span>
-                </div>
-                <div class="header-metric">
-                    <i class="ti ti-bolt text-warning"></i>
-                    <span>Avg Latency: <strong id="globalLatency">- ms</strong></span>
-                </div>
-            </div>
-
-            <!-- User Auth Profile -->
-            <div class="d-flex align-items-center gap-2">
-                <span class="user-badge-container" id="userBadge">
-                    <i class="ti ti-user-circle text-muted fs-5"></i>
-                    <span id="usernameLabel" class="fw-medium">...</span>
-                    <span id="roleLabel" class="role-badge">...</span>
-                </span>
-                <a id="logoutBtn" href="/logout/" class="btn btn-sm btn-nav-secondary" style="display:none;">
-                    <i class="ti ti-logout me-1"></i>Logout
-                </a>
-                <a id="loginBtn" href="/login/" class="btn btn-sm btn-nav-primary" style="display:none;">
-                    <i class="ti ti-login me-1"></i>Login
-                </a>
+                <p class="text-[10px] font-mono uppercase tracking-wider text-neutral-600 mt-1">Data Engineering Laboratory / IIT Palakkad</p>
             </div>
         </div>
-    </header>
 
-    <main class="container-fluid px-4 py-4">
+        <!-- Live Telemetry Pill Bar -->
+        <div class="hidden xl:flex items-center gap-2 font-mono text-[11px]">
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+                <span class="font-bold text-neutral-500">RATINGS:</span>
+                <span class="font-black text-black">33,832,162</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+                <span class="font-bold text-neutral-500">TITLES:</span>
+                <span class="font-black text-black">86,537</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+                <span class="font-bold text-neutral-500">GENOME:</span>
+                <span class="font-black text-black">18.4M</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+                <span class="w-2 h-2 bg-[#1d4ed8]"></span>
+                <span class="font-bold text-neutral-500">ENGINE:</span>
+                <span class="font-black text-black">PG-16 ACTIVE</span>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black shadow-[2px_2px_0px_#000000]">
+                <i class="ti ti-activity text-[#1d4ed8]"></i>
+                <span class="font-bold text-neutral-500">LATENCY:</span>
+                <span class="font-black text-black font-mono-num" id="globalLatency">0.0 ms</span>
+            </div>
+        </div>
 
-        <!-- ========================================================= -->
-        <!-- Filter & Search Command Bar                              -->
-        <!-- ========================================================= -->
-        <section class="panel p-3 mb-4">
-            <div class="row g-3 align-items-center">
-                <!-- Movie Search Autocomplete -->
-                <div class="col-lg-5 col-md-6 position-relative">
-                    <label class="form-label text-muted small mb-1 fw-semibold">
-                        <i class="ti ti-search me-1 text-primary"></i>Search Movie (Questions 3a, 3d & Rating):
-                    </label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: var(--border-subtle);">
-                            <i class="ti ti-film"></i>
-                        </span>
-                        <input type="text" id="movieSearchInput" class="form-control border-start-0" placeholder="Type title (e.g. Shawshank, Inception, Matrix, Pulp Fiction)..." autocomplete="off" value="Toy Story">
-                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch" style="border-color: var(--border-subtle);">
-                            <i class="ti ti-x"></i>
-                        </button>
-                    </div>
-                    <div id="searchDropdown" class="search-results-dropdown" style="display: none;"></div>
+        <!-- Auth / Session Identifier (Brutalist Pill) -->
+        <div class="flex items-center gap-2">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-white border-[1.5px] border-black text-xs shadow-[2px_2px_0px_#000000]" id="userBadge">
+                <span class="w-2 h-2 bg-black"></span>
+                <span class="font-mono font-bold uppercase tracking-tight text-black" id="usernameLabel">Guest</span>
+                <span class="text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 bg-neutral-200 border border-black text-black" id="roleLabel">GUEST</span>
+            </div>
+            <a class="inline-flex items-center text-xs font-mono font-bold uppercase text-black bg-white hover:bg-black hover:text-white border-[1.5px] border-black px-3 py-1.5 transition-colors shadow-[2px_2px_0px_#000000] no-underline" href="/logout/" id="logoutBtn" style="display: none;">
+                LOGOUT
+            </a>
+            <a class="inline-flex items-center text-xs font-mono font-bold uppercase text-white bg-black hover:bg-[#1d4ed8] border-[1.5px] border-black px-3 py-1.5 transition-colors shadow-[2px_2px_0px_#000000] no-underline" href="/login/?next=/" id="loginBtn">
+                LOGIN
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Main Brutalist Workplace Matrix -->
+<main class="max-w-[1720px] w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1">
+
+    <!-- Filter & Command Bar: Structured Form Matrix -->
+    <section class="swiss-box p-5">
+        <div class="flex items-center justify-between border-b-[1.5px] border-black pb-2.5 mb-4">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-mono font-black bg-black text-white px-2 py-0.5">INDEX 01</span>
+                <span class="font-mono text-xs font-bold uppercase tracking-widest text-black">QUERY DISPATCH &amp; BENCHMARK FILTERS</span>
+            </div>
+            <span class="text-[10px] font-mono text-neutral-500 uppercase tracking-widest hidden sm:inline">TABLES: core_movies, tag_relevance, fact_ratings</span>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-end">
+            <!-- Search Query Input -->
+            <div class="lg:col-span-5 relative">
+                <label class="block text-[10px] font-mono uppercase tracking-widest text-neutral-800 mb-1.5 font-bold">
+                    [01.A] CATALOG INQUIRY / SQL LOOKUP (QUERIES 3A, 3D &amp; 4)
+                </label>
+                <div class="relative flex items-center">
+                    <span class="absolute left-3 text-black pointer-events-none font-mono text-xs font-bold">
+                        &gt;_
+                    </span>
+                    <input autocomplete="off" class="w-full bg-white text-black text-xs sm:text-sm pl-8 pr-8 py-2.5 border-[1.5px] border-black focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8] focus:outline-none shadow-none font-mono font-semibold placeholder:text-neutral-400 placeholder:font-normal" id="movieSearchInput" placeholder="SEARCH TITLE (E.G. TOY STORY, SHAWSHANK, MATRIX)..." type="text" value="Toy Story">
+                    <button class="absolute right-2.5 text-black hover:text-[#1d4ed8] transition font-bold" id="btnClearSearch" title="Clear search" type="button">
+                        <i class="ti ti-x text-sm"></i>
+                    </button>
                 </div>
+                <div class="search-results-dropdown" id="searchDropdown" style="display: none;"></div>
+            </div>
 
-                <!-- Global Year Filter -->
-                <div class="col-lg-3 col-md-3">
-                    <label class="form-label text-muted small mb-1 fw-semibold">
-                        <i class="ti ti-calendar me-1 text-warning"></i>Release Year Filter (Questions 3b, 3f):
-                    </label>
-                    <select id="yearSelector" class="form-select font-mono">
-                        <option value="">Overall (All-Time)</option>
-                        <option value="2019">2019</option>
-                        <option value="2018">2018</option>
-                        <option value="2017" selected>2017</option>
-                        <option value="2016">2016</option>
-                        <option value="2015">2015</option>
-                        <option value="2010">2010</option>
-                        <option value="2005">2005</option>
-                        <option value="2000">2000</option>
-                        <option value="1995">1995</option>
-                        <option value="1994">1994</option>
+            <!-- Cohort Dropdown -->
+            <div class="lg:col-span-3">
+                <label class="block text-[10px] font-mono uppercase tracking-widest text-neutral-800 mb-1.5 font-bold">
+                    [01.B] ANNUAL COHORT FILTER (3B, 3F)
+                </label>
+                <div class="relative">
+                    <select class="w-full bg-white text-black text-xs sm:text-sm py-2.5 px-3 pr-8 border-[1.5px] border-black focus:border-[#1d4ed8] focus:ring-2 focus:ring-[#1d4ed8] focus:outline-none font-mono font-semibold appearance-none cursor-pointer rounded-none" id="yearSelector">
+                        <option value="">ALL-TIME LONGITUDINAL</option>
+                        <option value="2019">COHORT 2019</option>
+                        <option value="2018">COHORT 2018</option>
+                        <option selected="" value="2017">COHORT 2017</option>
+                        <option value="2016">COHORT 2016</option>
+                        <option value="2015">COHORT 2015</option>
+                        <option value="2010">COHORT 2010</option>
+                        <option value="2005">COHORT 2005</option>
+                        <option value="2000">COHORT 2000</option>
+                        <option value="1995">COHORT 1995</option>
+                        <option value="1994">COHORT 1994</option>
                     </select>
+                    <i class="ti ti-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-black pointer-events-none text-xs"></i>
                 </div>
+            </div>
 
-                <!-- Quick Pick Suggestions -->
-                <div class="col-lg-4 col-md-3">
-                    <span class="text-muted small d-block mb-1 fw-semibold">Quick Benchmarks:</span>
-                    <div class="d-flex flex-wrap gap-1">
-                        <button class="quick-pick-btn active" data-id="1" data-title="Toy Story (1995)">Toy Story</button>
-                        <button class="quick-pick-btn" data-id="318" data-title="Shawshank Redemption">Shawshank</button>
-                        <button class="quick-pick-btn" data-id="2571" data-title="Matrix, The">The Matrix</button>
-                        <button class="quick-pick-btn" data-id="79132" data-title="Inception">Inception</button>
-                        <button class="quick-pick-btn" data-id="296" data-title="Pulp Fiction">Pulp Fiction</button>
+            <!-- Curated Seeds -->
+            <div class="lg:col-span-4">
+                <span class="block text-[10px] font-mono uppercase tracking-widest text-neutral-800 mb-1.5 font-bold">
+                    [01.C] BENCHMARK SEED MOVIES
+                </span>
+                <div class="flex flex-wrap items-center gap-1.5" id="quickPickContainer">
+                    <button class="quick-pick-btn active" data-id="1" data-title="Toy Story (1995)">Toy Story</button>
+                    <button class="quick-pick-btn" data-id="318" data-title="Shawshank Redemption, The (1994)">Shawshank</button>
+                    <button class="quick-pick-btn" data-id="2571" data-title="Matrix, The (1999)">Matrix</button>
+                    <button class="quick-pick-btn" data-id="79132" data-title="Inception (2010)">Inception</button>
+                    <button class="quick-pick-btn" data-id="296" data-title="Pulp Fiction (1994)">Pulp Fiction</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dossier Header: Stark Swiss Editorial Monument -->
+    <section class="swiss-box p-6 sm:p-8 bg-white relative">
+        <div class="flex items-center justify-between border-b-[1.5px] border-black pb-3 mb-6">
+            <div class="flex items-center gap-3">
+                <span class="text-xs font-mono font-black bg-black text-white px-2 py-0.5">INDEX 02</span>
+                <span class="font-mono text-xs font-bold uppercase tracking-widest text-black">PRIMARY RECORD DOSSIER</span>
+            </div>
+            <div class="flex items-center gap-3 font-mono text-[11px]">
+                <span class="px-2 py-0.5 border border-black bg-neutral-100 font-bold" id="movieBadgeId">ID: #1</span>
+                <span class="px-2 py-0.5 border border-black bg-neutral-100 font-bold" id="movieReleaseYear">YEAR: 1995</span>
+                <span class="hidden sm:inline bg-[#1d4ed8] text-white px-2 py-0.5 font-bold">CORE_ARCHIVE</span>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Left Film Title & Taxonomies -->
+            <div class="lg:col-span-7 space-y-4">
+                <h2 class="text-4xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tight text-black leading-[0.95]" id="movieHeroTitle">
+                    Toy Story
+                </h2>
+                <p class="text-xs font-mono text-neutral-600 max-w-xl">
+                    CANONICAL IDENTIFIER IN 3NF REPOSITORY. LINKED VIA BRIDGE_MOVIE_GENRE JUNCTION TABLE WITH MULTI-VALUED RELEVANCE COEFFICIENTS.
+                </p>
+                <div class="flex flex-wrap items-center gap-2 pt-2" id="movieGenresList">
+                    <span class="text-xs font-mono font-bold uppercase px-3 py-1 bg-black text-white">ADVENTURE</span>
+                    <span class="text-xs font-mono font-bold uppercase px-3 py-1 bg-black text-white">ANIMATION</span>
+                    <span class="text-xs font-mono font-bold uppercase px-3 py-1 bg-black text-white">CHILDREN</span>
+                    <span class="text-xs font-mono font-bold uppercase px-3 py-1 bg-black text-white">COMEDY</span>
+                    <span class="text-xs font-mono font-bold uppercase px-3 py-1 bg-black text-white">FANTASY</span>
+                </div>
+            </div>
+
+            <!-- Right Oversized Brutalist Stats -->
+            <div class="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="border-[1.5px] border-black p-4 bg-[#fafafa] shadow-[3px_3px_0px_#000000]">
+                    <span class="block text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-500 mb-1">
+                        WEIGHTED MEAN (ROLLUP)
+                    </span>
+                    <div class="flex items-baseline gap-1">
+                        <span class="font-serif text-5xl font-bold tracking-tight text-black font-mono-num" id="movieHeroAvg">3.90</span>
+                        <span class="font-mono text-sm font-bold text-neutral-500">/ 5.00</span>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-black/20 flex justify-between items-center text-[9px] font-mono font-bold text-neutral-600 uppercase">
+                        <span>CONFIDENCE</span>
+                        <span class="text-[#1d4ed8]">99.8% SIGMA</span>
+                    </div>
+                </div>
+                <div class="border-[1.5px] border-black p-4 bg-[#fafafa] shadow-[3px_3px_0px_#000000]">
+                    <span class="block text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-500 mb-1">
+                        TOTAL RECORDED ASSESSMENTS
+                    </span>
+                    <div class="flex items-baseline gap-1">
+                        <span class="font-serif text-5xl font-bold tracking-tight text-black font-mono-num" id="movieHeroVotes">76,814</span>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-black/20 flex justify-between items-center text-[9px] font-mono font-bold text-neutral-600 uppercase">
+                        <span>SOURCE</span>
+                        <span class="text-black">FACT_RATINGS</span>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- ========================================================= -->
-        <!-- Selected Movie Metadata Banner                           -->
-        <!-- ========================================================= -->
-        <section class="movie-hero mb-4">
-            <div class="row align-items-center g-4">
-                <div class="col-lg-7">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="badge-movie-id font-mono" id="movieBadgeId"><i class="ti ti-film me-1"></i>Movie #1</span>
-                        <span class="badge-movie-year font-mono" id="movieReleaseYear"><i class="ti ti-calendar me-1"></i>1995</span>
+    <!-- Tier 1: 3-Column Analytical Section (Tags, Histogram, Rating Input) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- 3(a) Top-5 Tag Relevance -->
+        <div class="lg:col-span-4 flex flex-col">
+            <div class="swiss-box flex-1 flex flex-col">
+                <div class="swiss-header flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono font-black bg-white text-black px-1.5 py-0.2">3(A)</span>
+                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold">TOP-5 TAG RELEVANCE</h3>
                     </div>
-                    <h2 class="movie-hero-title mb-2" id="movieHeroTitle">Toy Story</h2>
-                    <div class="d-flex flex-wrap gap-2 pt-1" id="movieGenresList">
-                        <span class="movie-genre-tag">Adventure</span>
-                        <span class="movie-genre-tag">Animation</span>
-                        <span class="movie-genre-tag">Children</span>
-                        <span class="movie-genre-tag">Comedy</span>
-                        <span class="movie-genre-tag">Fantasy</span>
+                    <div class="flex items-center gap-1.5">
+                        <button class="swiss-action-btn" title="Export PNG" onclick="exportChartPng('chartTags')"><i class="ti ti-camera"></i></button>
+                        <button class="swiss-action-btn" title="Copy CSV" onclick="copyChartCsv('chartTags')"><i class="ti ti-clipboard"></i></button>
+                        <span class="font-mono text-[10px] px-1.5 py-0.5 bg-black border border-white text-white font-bold" id="tagRelevanceLatency">0 MS</span>
                     </div>
                 </div>
-                <div class="col-lg-5">
-                    <div class="hero-stats-wrapper">
-                        <div class="hero-stat-card">
-                            <span class="hero-stat-label">Average Rating</span>
-                            <div class="hero-stat-value" style="color: #d97706;">
-                                <i class="ti ti-star-filled text-warning"></i>
-                                <span id="movieHeroAvg">3.90</span>
-                                <span class="hero-stat-sub">/ 5.0</span>
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                    <div class="mb-2">
+                        <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 mb-1">GENOME VECTOR COEFFICIENT</div>
+                        <p class="text-[11px] font-mono text-black leading-relaxed">
+                            r &isin; [0.0, 1.0] computed against ML-33M genome scores.
+                        </p>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="chartTags"></canvas>
+                        <div id="chartTagsEmpty" class="hidden flex-col items-center justify-center h-full text-center p-6 border border-dashed border-black/30">
+                            <i class="ti ti-dna-off text-3xl mb-2 text-neutral-400"></i>
+                            <span class="font-mono text-xs font-bold uppercase text-black">NO GENOME VECTOR DATA</span>
+                            <span class="font-mono text-[10px] text-neutral-500 mt-1 uppercase">Title possesses zero relevance coefficients in ML-33M genome matrix.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3(d) Rating Distribution -->
+        <div class="lg:col-span-4 flex flex-col">
+            <div class="swiss-box flex-1 flex flex-col">
+                <div class="swiss-header flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono font-black bg-white text-black px-1.5 py-0.2">3(D)</span>
+                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold">RATING DISTRIBUTION</h3>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="inline-flex">
+                            <button class="swiss-scale-btn active" id="btnRatingDistLin" onclick="toggleScale('chartRatingDist', 'linear', this)">LIN</button>
+                            <button class="swiss-scale-btn" id="btnRatingDistLog" onclick="toggleScale('chartRatingDist', 'logarithmic', this)">LOG</button>
+                        </div>
+                        <button class="swiss-action-btn" title="Export PNG" onclick="exportChartPng('chartRatingDist')"><i class="ti ti-camera"></i></button>
+                        <button class="swiss-action-btn" title="Copy CSV" onclick="copyChartCsv('chartRatingDist')"><i class="ti ti-clipboard"></i></button>
+                        <span class="font-mono text-[10px] px-1.5 py-0.5 bg-black border border-white text-white font-bold" id="ratingDistLatency">0 MS</span>
+                    </div>
+                </div>
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                    <div class="mb-2">
+                        <div class="text-[10px] font-mono font-bold uppercase tracking-wider text-neutral-500 mb-1">TEN-BIN HISTOGRAM DENSITY</div>
+                        <p class="text-[11px] font-mono text-black leading-relaxed">
+                            Discrete rating frequencies [0.5 ★ &rarr; 5.0 ★].
+                        </p>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="chartRatingDist"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Problem 4: Rate This Movie (Tactile Brutalist Matrix) -->
+        <div class="lg:col-span-4 flex flex-col">
+            <div class="swiss-box flex-1 flex flex-col">
+                <div class="swiss-header flex items-center justify-between bg-[#1d4ed8] border-b-[1.5px] border-black">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono font-black bg-black text-white px-1.5 py-0.2">P-04</span>
+                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold text-white">USER RATING SUBMISSION</h3>
+                    </div>
+                    <span class="font-mono text-[10px] px-1.5 py-0.5 bg-white text-black font-extrabold">ACID WRITER</span>
+                </div>
+                <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                        <p class="text-[11px] font-mono text-neutral-700 leading-relaxed mb-3">
+                            Direct write transaction mutation to PostgreSQL <span class="bg-black text-white px-1 py-0.5 font-bold">fact_ratings</span> entity.
+                        </p>
+                        <div class="border-[1.5px] border-black p-3.5 bg-white shadow-[2px_2px_0px_#000000]">
+                            <div class="flex justify-between items-center mb-2.5 pb-2 border-b border-black">
+                                <span class="text-[10px] font-mono font-bold uppercase tracking-widest text-black">SELECTION TARGET</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 bg-neutral-200 border border-black" id="ratingStatusBadge">UNCOMMITTED</span>
+                                    <span class="font-serif font-bold text-2xl text-black font-mono-num" id="userRatingLabel">4.0 ★</span>
+                                </div>
                             </div>
-                            <span class="hero-stat-hint font-mono">3NF Warehouse Aggregation</span>
-                        </div>
-                        <div class="hero-stat-card">
-                            <span class="hero-stat-label">Total Reviews</span>
-                            <div class="hero-stat-value" style="color: #4f46e5;">
-                                <i class="ti ti-users text-primary"></i>
-                                <span id="movieHeroVotes">76,814</span>
+                            <!-- Star Selection Row -->
+                            <div class="text-center py-1">
+                                <div class="star-box inline-flex gap-2 text-2xl text-neutral-300 cursor-pointer mb-3" id="interactiveStars">
+                                    <i class="ti ti-star-filled filled" data-val="1"></i>
+                                    <i class="ti ti-star-filled filled" data-val="2"></i>
+                                    <i class="ti ti-star-filled filled" data-val="3"></i>
+                                    <i class="ti ti-star-filled filled" data-val="4"></i>
+                                    <i class="ti ti-star" data-val="5"></i>
+                                </div>
+                                <!-- Discrete Brutalist Matrix Slider -->
+                                <div class="space-y-3 my-2">
+                                    <div class="flex justify-between items-center text-[10px] font-mono font-bold text-neutral-600 uppercase">
+                                        <span>Scale Range:</span>
+                                        <span class="bg-black text-white px-1.5 py-0.5 font-bold" id="sliderScaleReadout">4.0 / 5.0 — PRAISEWORTHY</span>
+                                    </div>
+                                    <div class="relative flex items-center py-1">
+                                        <input type="range" id="ratingSlider" min="0.5" max="5.0" step="0.5" value="4.0" class="w-full accent-black cursor-pointer h-2 bg-neutral-200 border border-black rounded-none appearance-none focus:outline-none">
+                                    </div>
+                                </div>
                             </div>
-                            <span class="hero-stat-hint font-mono">Live fact_ratings count</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ========================================================= -->
-        <!-- Section 1: Questions 3(a), 3(d) & User Rating (Problem 4) -->
-        <!-- ========================================================= -->
-        <div class="row g-4 mb-4">
-            <!-- Question 3(a): Top-5 Tag Relevance -->
-            <div class="col-xl-4 col-lg-6">
-                <div class="panel h-100">
-                    <div class="panel-header">
-                        <h6 class="panel-title">
-                            <i class="ti ti-tags text-primary fs-5"></i>
-                            3(a) Top-5 Tag Relevance
-                        </h6>
-                        <span class="badge-latency font-mono" id="tagRelevanceLatency">0 ms</span>
-                    </div>
-                    <div class="panel-body">
-                        <p class="text-muted small mb-3">Genome relevance scores (0.0 to 1.0) ranked for selected movie:</p>
-                        <div class="chart-box">
-                            <canvas id="chartTags"></canvas>
-                            <div id="chartTagsEmpty" class="d-none flex-column align-items-center justify-content-center h-100 text-center py-4">
-                                <i class="ti ti-dna-off fs-1 text-secondary mb-2" style="opacity: 0.5;"></i>
-                                <div class="fw-semibold text-secondary small">No Genome Data Available</div>
-                                <small class="text-muted" style="font-size: 0.75rem;">This movie has no genome relevance scores in the dataset.</small>
+                            <div class="flex justify-between items-center text-[9px] font-mono font-bold text-neutral-500 mt-2.5 pt-1.5 border-t border-black/20 uppercase">
+                                <span>0.5 DEFICIENT</span>
+                                <span>2.5 MEDIAN</span>
+                                <span>5.0 CANONICAL</span>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Question 3(d): Rating Distribution for Selected Movie -->
-            <div class="col-xl-4 col-lg-6">
-                <div class="panel h-100">
-                    <div class="panel-header">
-                        <h6 class="panel-title">
-                            <i class="ti ti-chart-histogram text-warning fs-5"></i>
-                            3(d) Rating Distribution
-                        </h6>
-                        <span class="badge-latency font-mono" id="ratingDistLatency">0 ms</span>
-                    </div>
-                    <div class="panel-body">
-                        <p class="text-muted small mb-3">Vote counts across 10 rating intervals (0.5 to 5.0 stars):</p>
-                        <div class="chart-box">
-                            <canvas id="chartRatingDist"></canvas>
-                        </div>
+                    <!-- Action Button -->
+                    <div class="pt-1" id="ratingButtonContainer">
+                        <button class="w-full py-3 px-4 bg-black hover:bg-[#1d4ed8] text-white text-xs font-mono font-bold tracking-widest uppercase transition-colors border-[1.5px] border-black shadow-[3px_3px_0px_#000000] flex items-center justify-center gap-2 cursor-pointer" id="btnSaveRating">
+                            <i class="ti ti-database-import text-sm"></i>
+                            <span>COMMIT RATING TO POSTGRESQL</span>
+                        </button>
+                        <a class="w-full py-3 px-4 bg-black text-white text-xs font-mono font-bold uppercase transition-all shadow-[2px_2px_0px_#000000] flex items-center justify-center gap-2 no-underline" href="/login/?next=/" id="btnLoginToRate" style="display: none;">
+                            <i class="ti ti-lock text-sm"></i>
+                            <span>AUTHENTICATE TO COMMIT RATING</span>
+                        </a>
+                        <div class="mt-2 text-center text-xs font-mono font-bold text-black" id="ratingAlert" style="display: none;"></div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Problem 4: Role-Based User Rating Interaction -->
-            <div class="col-xl-4 col-lg-12">
-                <div class="panel h-100">
-                    <div class="panel-header">
-                        <h6 class="panel-title">
-                            <i class="ti ti-user-check text-success fs-5"></i>
-                            Problem 4: Rate This Movie
-                        </h6>
-                        <span class="badge-question font-mono">RBAC</span>
+    <!-- Tier 2: 2-Column Analytical Section (Top 10 Rated Films & Dominant Genre) -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- 3(b) Top 10 Movies by Average Rating -->
+        <div class="lg:col-span-7 flex flex-col">
+            <div class="swiss-box flex-1 flex flex-col">
+                <div class="swiss-header flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-[10px] font-mono font-black bg-white text-black px-1.5 py-0.2">3(B)</span>
+                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold">TOP 10 MOVIES BY MEAN RATING</h3>
+                        <span class="font-mono text-[9px] font-bold px-2 py-0.5 bg-black border border-white text-white uppercase" id="topMoviesFilterBadge">COHORT: 2017</span>
                     </div>
-                    <div class="panel-body d-flex flex-column justify-content-between">
+                    <div class="flex items-center gap-1.5">
+                        <button class="swiss-action-btn" title="Export PNG" onclick="exportChartPng('chartTopMovies')"><i class="ti ti-camera"></i></button>
+                        <button class="swiss-action-btn" title="Copy CSV" onclick="copyChartCsv('chartTopMovies')"><i class="ti ti-clipboard"></i></button>
+                        <span class="font-mono text-[10px] px-1.5 py-0.5 bg-black border border-white text-white font-bold" id="topMoviesLatency">0 MS</span>
+                    </div>
+                </div>
+                <div class="p-4 flex-1">
+                    <div class="chart-box-lg">
+                        <canvas id="chartTopMovies"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3(f) Dominant Genre Distribution -->
+        <div class="lg:col-span-5 flex flex-col">
+            <div class="swiss-box flex-1 flex flex-col">
+                <div class="swiss-header flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-[10px] font-mono font-black bg-white text-black px-1.5 py-0.2">3(F)</span>
+                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold">DOMINANT GENRE DISTRIBUTION</h3>
+                        <span class="font-mono text-[9px] font-bold px-2 py-0.5 bg-black border border-white text-white uppercase" id="dominantYearPill">2017</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button class="swiss-action-btn" title="Export PNG" onclick="exportChartPng('chartDominantGenre')"><i class="ti ti-camera"></i></button>
+                        <button class="swiss-action-btn" title="Copy CSV" onclick="copyChartCsv('chartDominantGenre')"><i class="ti ti-clipboard"></i></button>
+                        <span class="font-mono text-[10px] px-1.5 py-0.5 bg-black border border-white text-white font-bold" id="dominantLatency">0 MS</span>
+                    </div>
+                </div>
+                <div class="p-4 flex-1 flex flex-col justify-between space-y-4">
+                    <!-- Brutalist Primary Stat Callout -->
+                    <div class="border-[1.5px] border-black p-4 bg-[#fafafa] flex items-center justify-between shadow-[2px_2px_0px_#000000]">
                         <div>
-                            <p class="text-muted small mb-3">
-                                Authenticated users can modify or submit new ratings directly into PostgreSQL <code class="font-mono">fact_ratings</code>.
-                            </p>
-                            
-                            <div class="rating-interactive-box mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="small fw-semibold text-muted">Your Selection:</span>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge font-mono" id="ratingStatusBadge" style="font-size:0.7rem;">Not Rated</span>
-                                        <span class="fw-bold font-mono fs-4 text-warning" id="userRatingLabel">4.0 ★</span>
-                                    </div>
-                                </div>
-                                <div class="text-center py-2">
-                                    <div class="star-box mb-3" id="interactiveStars">
-                                        <i class="ti ti-star-filled filled" data-val="1"></i>
-                                        <i class="ti ti-star-filled filled" data-val="2"></i>
-                                        <i class="ti ti-star-filled filled" data-val="3"></i>
-                                        <i class="ti ti-star-filled filled" data-val="4"></i>
-                                        <i class="ti ti-star" data-val="5"></i>
-                                    </div>
-                                    <!-- Quick Rating Selection (0.5 to 5.0) -->
-                                    <div class="rating-pills-grid" id="ratingPills">
-                                        <button type="button" class="rating-pill font-mono" data-rating="0.5">0.5</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="1.0">1.0</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="1.5">1.5</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="2.0">2.0</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="2.5">2.5</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="3.0">3.0</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="3.5">3.5</button>
-                                        <button type="button" class="rating-pill font-mono active" data-rating="4.0">4.0</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="4.5">4.5</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="5.0">5.0</button>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-between text-muted mt-2" style="font-size: 0.72rem;">
-                                    <span>0.5 Stars (Poor)</span>
-                                    <span>2.5 Stars (Average)</span>
-                                    <span>5.0 Stars (Masterpiece)</span>
-                                </div>
-                            </div>
+                            <span class="block text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-500">PRIMARY RELEASE PLURALITY</span>
+                            <h4 class="text-3xl font-black uppercase text-black tracking-tight mt-0.5" id="dominantGenreTitle">Drama</h4>
                         </div>
+                        <div class="text-right">
+                            <span class="font-serif text-3xl font-bold text-black font-mono-num" id="dominantGenreCount">0</span>
+                            <span class="block text-[10px] font-mono font-bold uppercase text-neutral-500">CATALOGUE TITLES</span>
+                        </div>
+                    </div>
+                    <!-- Genre Chart Canvas -->
+                    <div class="chart-box" style="height: 235px;">
+                        <canvas id="chartDominantGenre"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                        <div id="ratingButtonContainer">
-                            <button class="btn btn-action-rating w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold" id="btnSaveRating">
-                                <i class="ti ti-device-floppy fs-5"></i>
-                                Save Rating in PostgreSQL
-                            </button>
-                            <a href="/login/?next=/" class="btn btn-action-rating w-100 py-2 d-flex align-items-center justify-content-center gap-2 fw-semibold text-decoration-none" id="btnLoginToRate" style="display: none;">
-                                <i class="ti ti-lock fs-5"></i>
-                                Click Here to Login & Rate
-                            </a>
-                            <div id="ratingAlert" class="mt-2 text-center small font-mono" style="display: none;"></div>
+    <!-- Tier 3: 3-Column Analytical Section (Genre Tags, Coverage %, Volume) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-6">
+        <!-- 3(c) Popular Tags by Genre -->
+        <div class="lg:col-span-4 flex flex-col">
+            <div class="swiss-box flex-1 flex flex-col">
+                <div class="swiss-header flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono font-black bg-white text-black px-1.5 py-0.2">3(C)</span>
+                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold">TOP TAGS BY GENRE</h3>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <button class="swiss-action-btn" title="Export PNG" onclick="exportChartPng('chartGenreTags')"><i class="ti ti-camera"></i></button>
+                        <button class="swiss-action-btn" title="Copy CSV" onclick="copyChartCsv('chartGenreTags')"><i class="ti ti-clipboard"></i></button>
+                        <span class="font-mono text-[10px] px-1.5 py-0.5 bg-black border border-white text-white font-bold" id="genreTagsLatency">0 MS</span>
+                    </div>
+                </div>
+                <div class="p-4 flex-1 flex flex-col justify-between">
+                    <div class="flex flex-wrap gap-1 mb-3" id="genreFilterPills">
+                        <button class="genre-btn active" data-genre="Action">Action</button>
+                        <button class="genre-btn" data-genre="Comedy">Comedy</button>
+                        <button class="genre-btn" data-genre="Drama">Drama</button>
+                        <button class="genre-btn" data-genre="Sci-Fi">Sci-Fi</button>
+                        <button class="genre-btn" data-genre="Thriller">Thriller</button>
+                        <button class="genre-btn" data-genre="Horror">Horror</button>
+                        <button class="genre-btn" data-genre="Animation">Animation</button>
+                    </div>
+                    <div class="chart-box" style="height: 220px;">
+                        <canvas id="chartGenreTags"></canvas>
+                        <div id="chartGenreTagsEmpty" class="hidden flex-col items-center justify-center h-full text-center p-6 border border-dashed border-black/30">
+                            <i class="ti ti-tags-off text-3xl mb-2 text-neutral-400"></i>
+                            <span class="font-mono text-xs font-bold uppercase text-black" id="chartGenreTagsEmptyTitle">NO TAG RECORD DETECTED</span>
+                            <span class="font-mono text-[10px] text-neutral-500 mt-1 uppercase" id="chartGenreTagsEmptySubtitle">Zero tag occurrences recorded for this genre category.</span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- Section 2: Questions 3(b) & 3(f)                          -->
-        <!-- ========================================================= -->
-        <div class="row g-4 mb-4">
-            <!-- Question 3(b): Top 10 Movies Leaderboard -->
-            <div class="col-lg-7">
-                <div class="panel h-100">
-                    <div class="panel-header">
-                        <div class="d-flex align-items-center gap-2">
-                            <h6 class="panel-title">
-                                <i class="ti ti-trophy fs-5" style="color: #d97706;"></i>
-                                3(b) Top 10 Movies by Average Rating
-                            </h6>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-mono" id="topMoviesFilterBadge">Year: 2017</span>
-                        </div>
-                        <span class="badge-latency font-mono" id="topMoviesLatency">0 ms</span>
+        <!-- 3(g) Genre Coverage (% of Catalog) -->
+        <div class="lg:col-span-4 flex flex-col">
+            <div class="swiss-box flex-1 flex flex-col">
+                <div class="swiss-header flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono font-black bg-white text-black px-1.5 py-0.2">3(G)</span>
+                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold">CATALOG GENRE COVERAGE</h3>
                     </div>
-                    <div class="panel-body">
-                        <div class="chart-box-lg">
-                            <canvas id="chartTopMovies"></canvas>
-                        </div>
+                    <div class="flex items-center gap-1.5">
+                        <button class="swiss-action-btn" title="Export PNG" onclick="exportChartPng('chartGenreCoverage')"><i class="ti ti-camera"></i></button>
+                        <button class="swiss-action-btn" title="Copy CSV" onclick="copyChartCsv('chartGenreCoverage')"><i class="ti ti-clipboard"></i></button>
+                        <span class="font-mono text-[10px] px-1.5 py-0.5 bg-black border border-white text-white font-bold" id="coverageLatency">0 MS</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Question 3(f): Dominant Genre for Specified Year -->
-            <div class="col-lg-5">
-                <div class="panel h-100">
-                    <div class="panel-header">
-                        <div class="d-flex align-items-center gap-2">
-                            <h6 class="panel-title">
-                                <i class="ti ti-crown fs-5" style="color: #e11d48;"></i>
-                                3(f) Dominant Genre
-                            </h6>
-                            <span class="badge bg-secondary-subtle font-mono text-dark" id="dominantYearPill">2017</span>
-                        </div>
-                        <span class="badge-latency font-mono" id="dominantLatency">0 ms</span>
-                    </div>
-                    <div class="panel-body">
-                        <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-3" style="background: #fff1f2; border: 1px solid #ffe4e6;">
-                            <div>
-                                <small class="text-danger text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.06em;">#1 Release Category</small>
-                                <h3 class="mb-0 fw-bold text-dark" id="dominantGenreTitle">Drama</h3>
-                            </div>
-                            <div class="text-end font-mono">
-                                <span class="fs-4 fw-bold text-danger" id="dominantGenreCount">1,423</span>
-                                <small class="text-muted d-block">films released</small>
-                            </div>
-                        </div>
-                        <div class="chart-box" style="height: 225px;">
-                            <canvas id="chartDominantGenre"></canvas>
-                        </div>
+                <div class="p-4 flex-1">
+                    <div class="chart-box">
+                        <canvas id="chartGenreCoverage"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ========================================================= -->
-        <!-- Section 3: Questions 3(c), 3(g) & 3(e)                    -->
-        <!-- ========================================================= -->
-        <div class="row g-4">
-            <!-- Question 3(c): Most Popular Tags by Genre -->
-            <div class="col-lg-4 col-md-6">
-                <div class="panel h-100">
-                    <div class="panel-header">
-                        <h6 class="panel-title">
-                            <i class="ti ti-hash text-success fs-5"></i>
-                            3(c) Popular Tags by Genre
-                        </h6>
-                        <span class="badge-latency font-mono" id="genreTagsLatency">0 ms</span>
+        <!-- 3(e) Total Ratings Volume -->
+        <div class="md:col-span-2 lg:col-span-4 flex flex-col">
+            <div class="swiss-box flex-1 flex flex-col">
+                <div class="swiss-header flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] font-mono font-black bg-white text-black px-1.5 py-0.2">3(E)</span>
+                        <h3 class="text-xs font-mono uppercase tracking-wider font-bold">RATINGS VOLUME DISTRIBUTION</h3>
                     </div>
-                    <div class="panel-body">
-                        <!-- Genre Selection Buttons -->
-                        <div class="d-flex flex-wrap gap-1 mb-3" id="genreFilterPills">
-                            <button class="genre-btn active" data-genre="Action">Action</button>
-                            <button class="genre-btn" data-genre="Comedy">Comedy</button>
-                            <button class="genre-btn" data-genre="Drama">Drama</button>
-                            <button class="genre-btn" data-genre="Sci-Fi">Sci-Fi</button>
-                            <button class="genre-btn" data-genre="Thriller">Thriller</button>
-                            <button class="genre-btn" data-genre="Horror">Horror</button>
-                            <button class="genre-btn" data-genre="Animation">Animation</button>
+                    <div class="flex items-center gap-1.5">
+                        <div class="inline-flex">
+                            <button class="swiss-scale-btn active" id="btnVolumeLin" onclick="toggleScale('chartRatingsVolume', 'linear', this)">LIN</button>
+                            <button class="swiss-scale-btn" id="btnVolumeLog" onclick="toggleScale('chartRatingsVolume', 'logarithmic', this)">LOG</button>
                         </div>
-                        <div class="chart-box" style="height: 220px;">
-                            <canvas id="chartGenreTags"></canvas>
-                            <div id="chartGenreTagsEmpty" class="d-none flex-column align-items-center justify-content-center h-100 text-center py-4">
-                                <i class="ti ti-tags-off fs-1 text-secondary mb-2" style="opacity: 0.5;"></i>
-                                <div class="fw-semibold text-secondary small" id="chartGenreTagsEmptyTitle">No Tag Data Available</div>
-                                <small class="text-muted" id="chartGenreTagsEmptySubtitle" style="font-size: 0.75rem;">No user tags recorded for this genre.</small>
-                            </div>
-                        </div>
+                        <button class="swiss-action-btn" title="Export PNG" onclick="exportChartPng('chartRatingsVolume')"><i class="ti ti-camera"></i></button>
+                        <button class="swiss-action-btn" title="Copy CSV" onclick="copyChartCsv('chartRatingsVolume')"><i class="ti ti-clipboard"></i></button>
+                        <span class="font-mono text-[10px] px-1.5 py-0.5 bg-black border border-white text-white font-bold" id="volumeLatency">0 MS</span>
                     </div>
                 </div>
-            </div>
-
-            <!-- Question 3(g): Genre-wise Coverage -->
-            <div class="col-lg-4 col-md-6">
-                <div class="panel h-100">
-                    <div class="panel-header">
-                        <h6 class="panel-title">
-                            <i class="ti ti-chart-pie text-info fs-5"></i>
-                            3(g) Genre Coverage (% of Catalog)
-                        </h6>
-                        <span class="badge-latency font-mono" id="coverageLatency">0 ms</span>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-box">
-                            <canvas id="chartGenreCoverage"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Question 3(e): Total Ratings Volume Distribution -->
-            <div class="col-lg-4 col-md-12">
-                <div class="panel h-100">
-                    <div class="panel-header">
-                        <h6 class="panel-title">
-                            <i class="ti ti-chart-bar fs-5" style="color: #7c3aed;"></i>
-                            3(e) Total Ratings Volume
-                        </h6>
-                        <span class="badge-latency font-mono" id="volumeLatency">0 ms</span>
-                    </div>
-                    <div class="panel-body">
-                        <div class="chart-box">
-                            <canvas id="chartRatingsVolume"></canvas>
-                        </div>
+                <div class="p-4 flex-1">
+                    <div class="chart-box">
+                        <canvas id="chartRatingsVolume"></canvas>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-    </main>
+</main>
 
-    <!-- Global Toast Alert -->
-    <div id="toastAlert" class="toast-notify"></div>
+<!-- Brutalist Archival Footer Statement -->
+<footer class="mt-8 border-t-2 border-black py-4 bg-white">
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-6 flex flex-wrap items-center justify-between gap-3 text-[11px] font-mono font-bold uppercase text-black">
+        <div class="flex items-center gap-2">
+            <span class="w-3 h-3 bg-black"></span>
+            <span>DATA ENGINEERING LABORATORY &bull; IIT PALAKKAD &bull; PG-16 WAREHOUSE</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <span>OLAP ARCHIVAL SCHEMA</span>
+            <span>&bull;</span>
+            <span>GENOME 2024</span>
+            <span>&bull;</span>
+            <span class="bg-black text-white px-2 py-0.5">IITPKD-CS-DS5003</span>
+        </div>
+    </div>
+</footer>
 
-    <!-- ========================================================= -->
-    <!-- Executive Dashboard Analytics Engine Script               -->
-    <!-- ========================================================= -->
-    <script>
-        // Global State
-        let activeMovieId = 1;
-        let activeRating = 4.0;
-        let activeYear = 2017;
-        let cachedGenreTags = null;
-        let isUserAuthenticated = false;
-        const charts = {};
+<!-- Toast Notification -->
+<div class="toast-notify font-mono uppercase" id="toastAlert"></div>
 
-        // Clean Modern Light Theme Defaults for Chart.js
-        Chart.defaults.color = '#64748b';
-        Chart.defaults.borderColor = '#f1f5f9';
-        Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
-        Chart.defaults.plugins.tooltip.backgroundColor = '#ffffff';
-        Chart.defaults.plugins.tooltip.titleColor = '#0f172a';
-        Chart.defaults.plugins.tooltip.bodyColor = '#334155';
-        Chart.defaults.plugins.tooltip.borderColor = '#e2e8f0';
-        Chart.defaults.plugins.tooltip.borderWidth = 1;
-        Chart.defaults.plugins.tooltip.padding = 10;
-        Chart.defaults.plugins.tooltip.boxPadding = 5;
-        Chart.defaults.plugins.tooltip.usePointStyle = true;
+<!-- Script Logic: Connected Real-Time Analytical Engine with Strict Swiss Minimalist Styling -->
+<script>
+    // Strict Swiss Palette: High contrast black, crisp whites, pure zinc grays, deep cobalt accent
+    const SWISS_PALETTE = {
+        black: '#000000',
+        ink: '#18181b',
+        cobalt: '#1d4ed8',
+        gray800: '#27272a',
+        gray600: '#52525b',
+        gray400: '#a1a1aa',
+        gray200: '#e4e4e7',
+        border: '#000000',
+        grid: '#e4e4e7',
+        textDark: '#000000'
+    };
 
-        function renderChart(canvasId, config) {
-            if (charts[canvasId]) {
-                charts[canvasId].destroy();
+    const charts = {};
+    const chartScales = {
+        chartRatingDist: 'linear',
+        chartRatingsVolume: 'linear'
+    };
+    let activeMovieId = 1;
+    let activeYear = 2017;
+    let activeRating = 4.0;
+    let isUserAuthenticated = false;
+    let cachedGenreTags = null;
+
+    // Global Chart.js Swiss typography overrides
+    Chart.defaults.font.family = "'JetBrains Mono', monospace";
+    Chart.defaults.font.size = 10;
+    Chart.defaults.color = '#000000';
+    Chart.defaults.borderColor = SWISS_PALETTE.grid;
+    Chart.defaults.plugins.tooltip.backgroundColor = '#000000';
+    Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+    Chart.defaults.plugins.tooltip.bodyColor = '#ffffff';
+    Chart.defaults.plugins.tooltip.borderColor = '#ffffff';
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.padding = 8;
+    Chart.defaults.plugins.tooltip.boxPadding = 4;
+    Chart.defaults.plugins.tooltip.usePointStyle = true;
+
+    function renderChart(canvasId, config) {
+        if (charts[canvasId]) {
+            charts[canvasId].destroy();
+        }
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        charts[canvasId] = new Chart(ctx, config);
+        return charts[canvasId];
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toastAlert');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3200);
+    }
+
+    function exportChartPng(canvasId) {
+        const chart = charts[canvasId];
+        if (!chart) return;
+        const url = chart.toBase64Image();
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${canvasId}_${Date.now()}.png`;
+        a.click();
+        showToast(`IMAGE EXPORT: SAVED ${canvasId.toUpperCase()} AS PNG`);
+    }
+
+    function copyChartCsv(canvasId) {
+        const chart = charts[canvasId];
+        if (!chart) return;
+        const labels = chart.data.labels || [];
+        const dataset = chart.data.datasets && chart.data.datasets[0] ? chart.data.datasets[0] : null;
+        if (!dataset) return;
+        const values = dataset.data || [];
+        let csv = 'Label,Value\n';
+        labels.forEach((l, i) => {
+            csv += `"${l}",${values[i] !== undefined ? values[i] : ''}\n`;
+        });
+        navigator.clipboard.writeText(csv).then(() => {
+            showToast(`CLIPBOARD: ${canvasId.toUpperCase()} DATA COPIED AS CSV`);
+        }).catch(() => {
+            showToast(`CLIPBOARD: FAILED TO COPY CSV`);
+        });
+    }
+
+    function toggleScale(chartId, scaleType, btn) {
+        chartScales[chartId] = scaleType;
+        const chart = charts[chartId];
+        if (!chart) return;
+
+        // Update button visual states
+        const parent = btn.parentElement;
+        if (parent) {
+            parent.querySelectorAll('.swiss-scale-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // Apply scale change to y-axis
+        if (chart.options.scales && chart.options.scales.y) {
+            chart.options.scales.y.type = scaleType;
+            chart.update();
+            showToast(`SCALE ADJUSTMENT: ${chartId.toUpperCase()} SET TO ${scaleType.toUpperCase()}`);
+        }
+    }
+
+    // Rating Descriptors Map
+    const RATING_DESCRIPTORS = {
+        0.5: '0.5 / 5.0 — DEFICIENT',
+        1.0: '1.0 / 5.0 — POOR',
+        1.5: '1.5 / 5.0 — MEDIOCRE',
+        2.0: '2.0 / 5.0 — BELOW AVERAGE',
+        2.5: '2.5 / 5.0 — MEDIAN',
+        3.0: '3.0 / 5.0 — DECENT',
+        3.5: '3.5 / 5.0 — SOLID',
+        4.0: '4.0 / 5.0 — PRAISEWORTHY',
+        4.5: '4.5 / 5.0 — EXCELLENT',
+        5.0: '5.0 / 5.0 — CANONICAL MASTERPIECE'
+    };
+
+    function setRatingValue(score) {
+        activeRating = parseFloat(score);
+        const ratingLabel = document.getElementById('userRatingLabel');
+        const slider = document.getElementById('ratingSlider');
+        const readout = document.getElementById('sliderScaleReadout');
+
+        if (ratingLabel) ratingLabel.textContent = `${activeRating.toFixed(1)} ★`;
+        if (slider) slider.value = activeRating;
+        if (readout) readout.textContent = RATING_DESCRIPTORS[activeRating] || `${activeRating.toFixed(1)} / 5.0`;
+
+        const stars = document.querySelectorAll('#interactiveStars i');
+        stars.forEach((star, index) => {
+            const starVal = index + 1;
+            if (starVal <= Math.ceil(activeRating)) {
+                star.className = 'ti ti-star-filled filled';
+            } else {
+                star.className = 'ti ti-star';
             }
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            charts[canvasId] = new Chart(ctx, config);
-            return charts[canvasId];
+        });
+    }
+
+    // =============================================================
+    // 1. Primary Record Dossier Loader
+    // =============================================================
+    async function loadMovieDetails(movieId) {
+        try {
+            const res = await fetch(`/api/movies/details/?movie_id=${movieId}`);
+            if (!res.ok) return;
+            const d = await res.json();
+
+            document.getElementById('movieHeroTitle').textContent = d.title;
+            document.getElementById('movieBadgeId').textContent = `ID: #${d.movie_id}`;
+            document.getElementById('movieReleaseYear').textContent = `YEAR: ${d.release_year || 'N/A'}`;
+            document.getElementById('movieHeroAvg').textContent = d.avg_rating.toFixed(2);
+            document.getElementById('movieHeroVotes').textContent = d.total_ratings.toLocaleString();
+
+            const genresContainer = document.getElementById('movieGenresList');
+            genresContainer.innerHTML = '';
+            (d.genres || []).forEach(g => {
+                const span = document.createElement('span');
+                span.className = 'text-xs font-mono font-bold uppercase px-3 py-1 bg-black text-white';
+                span.textContent = g;
+                genresContainer.appendChild(span);
+            });
+        } catch (err) {
+            console.error("Failed to load movie details:", err);
         }
+    }
 
-        function showToast(msg, isSuccess = true) {
-            const toast = document.getElementById('toastAlert');
-            if (!toast) return;
-            toast.textContent = msg;
-            toast.style.borderColor = isSuccess ? '#10b981' : '#f43f5e';
-            toast.style.display = 'block';
-            setTimeout(() => { toast.style.display = 'none'; }, 3500);
-        }
+    // =============================================================
+    // 2. Scenario 3(a): Top-5 Tag Relevance Scores
+    // =============================================================
+    async function loadMovieTags(movieId) {
+        try {
+            const res = await fetch(`/api/analytics/movie-tags/?movie_id=${movieId}`);
+            const data = await res.json();
+            document.getElementById('tagRelevanceLatency').textContent = `${data.latency_ms} MS`;
+            const tags = data.tags || [];
 
-        // =============================================================
-        // 1. Movie Details Loader
-        // =============================================================
-        async function loadMovieDetails(movieId) {
-            try {
-                const res = await fetch(`/api/movies/details/?movie_id=${movieId}`);
-                if (!res.ok) return;
-                const d = await res.json();
-                
-                document.getElementById('movieHeroTitle').textContent = d.title;
-                document.getElementById('movieBadgeId').innerHTML = `<i class="ti ti-film me-1"></i>Movie #${d.movie_id}`;
-                document.getElementById('movieReleaseYear').innerHTML = `<i class="ti ti-calendar me-1"></i>${d.release_year || 'N/A'}`;
-                document.getElementById('movieHeroAvg').textContent = d.avg_rating.toFixed(2);
-                document.getElementById('movieHeroVotes').textContent = d.total_ratings.toLocaleString();
+            const canvas = document.getElementById('chartTags');
+            const emptyBox = document.getElementById('chartTagsEmpty');
 
-                const genresContainer = document.getElementById('movieGenresList');
-                genresContainer.innerHTML = '';
-                (d.genres || []).forEach(g => {
-                    const span = document.createElement('span');
-                    span.className = 'movie-genre-tag';
-                    span.textContent = g;
-                    genresContainer.appendChild(span);
-                });
-            } catch (err) {
-                console.error("Failed to load movie details:", err);
-            }
-        }
-
-        // =============================================================
-        // 2. Scenario 3(a): Top-5 Tag Relevance Scores
-        // =============================================================
-        async function loadMovieTags(movieId) {
-            try {
-                const res = await fetch(`/api/analytics/movie-tags/?movie_id=${movieId}`);
-                const data = await res.json();
-                document.getElementById('tagRelevanceLatency').textContent = `${data.latency_ms} ms`;
-                const tags = data.tags || [];
-
-                const canvas = document.getElementById('chartTags');
-                const emptyBox = document.getElementById('chartTagsEmpty');
-
-                if (!tags || tags.length === 0) {
-                    if (charts['chartTags']) {
-                        charts['chartTags'].destroy();
-                        delete charts['chartTags'];
-                    }
-                    if (canvas) canvas.style.display = 'none';
-                    if (emptyBox) {
-                        emptyBox.classList.remove('d-none');
-                        emptyBox.classList.add('d-flex');
-                    }
-                    return;
+            if (!tags || tags.length === 0) {
+                if (charts['chartTags']) {
+                    charts['chartTags'].destroy();
+                    delete charts['chartTags'];
                 }
-
-                if (canvas) canvas.style.display = 'block';
+                if (canvas) canvas.style.display = 'none';
                 if (emptyBox) {
-                    emptyBox.classList.add('d-none');
-                    emptyBox.classList.remove('d-flex');
+                    emptyBox.classList.remove('hidden');
+                    emptyBox.classList.add('flex');
                 }
-
-                // Rescale axis dynamically so tight clusters (e.g. 0.985 vs 0.999) are easily visualized
-                const scores = tags.map(t => t.relevance);
-                const minScore = scores.length ? Math.min(...scores) : 0;
-                const maxScore = scores.length ? Math.max(...scores) : 1.0;
-
-                let xMin = 0;
-                if (minScore >= 0.95) {
-                    xMin = Math.max(0, Math.floor((minScore - 0.015) * 50) / 50); // e.g. 0.96 or 0.95
-                } else if (minScore >= 0.85) {
-                    xMin = Math.max(0, Math.floor((minScore - 0.03) * 20) / 20); // e.g. 0.85 or 0.80
-                } else if (minScore >= 0.60) {
-                    xMin = Math.max(0, Math.floor((minScore - 0.05) * 10) / 10);
-                }
-                const xMax = 1.0;
-
-                renderChart('chartTags', {
-                    type: 'bar',
-                    data: {
-                        labels: tags.map(t => t.tag),
-                        datasets: [{
-                            label: 'Relevance',
-                            data: tags.map(t => t.relevance),
-                            backgroundColor: '#4f46e5',
-                            hoverBackgroundColor: '#4338ca',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: (ctx) => ` Relevance: ${ctx.parsed.x.toFixed(4)}`
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                min: xMin,
-                                max: xMax,
-                                grid: { color: '#f1f5f9' },
-                                ticks: {
-                                    callback: (val) => val.toFixed(2),
-                                    color: '#64748b'
-                                }
-                            },
-                            y: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to load movie tags:", err);
-            }
-        }
-
-        // =============================================================
-        // 3. Scenario 3(d): User Rating Distribution (0.5 to 5.0)
-        // =============================================================
-        async function loadRatingDistribution(movieId) {
-            try {
-                const res = await fetch(`/api/analytics/rating-distribution/?movie_id=${movieId}`);
-                const data = await res.json();
-                document.getElementById('ratingDistLatency').textContent = `${data.latency_ms} ms`;
-                const dist = data.distribution || [];
-
-                renderChart('chartRatingDist', {
-                    type: 'bar',
-                    data: {
-                        labels: dist.map(d => `${d.rating}★`),
-                        datasets: [{
-                            label: 'Votes',
-                            data: dist.map(d => d.count),
-                            backgroundColor: '#f59e0b',
-                            hoverBackgroundColor: '#d97706',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to load rating distribution:", err);
-            }
-        }
-
-        // =============================================================
-        // 4. Scenario 3(b): Top 10 Movies Leaderboard
-        // =============================================================
-        async function loadTopMovies(year = null) {
-            try {
-                const url = year ? `/api/analytics/top-movies/?year=${year}` : '/api/analytics/top-movies/';
-                const res = await fetch(url);
-                const data = await res.json();
-                document.getElementById('topMoviesLatency').textContent = `${data.latency_ms} ms`;
-                document.getElementById('topMoviesFilterBadge').textContent = year ? `Year: ${year}` : 'Overall';
-                const movies = data.movies || [];
-
-                const ratings = movies.map(m => m.avg_rating);
-                const minRating = ratings.length ? Math.min(...ratings) : 3.5;
-                const maxRating = ratings.length ? Math.max(...ratings) : 5.0;
-                // Rescale axis dynamically so top movie rating differences pop out clearly
-                const xMin = Math.max(0, Math.floor((minRating - 0.15) * 10) / 10);
-                const xMax = Math.min(5.0, Math.ceil((maxRating + 0.05) * 10) / 10);
-
-                renderChart('chartTopMovies', {
-                    type: 'bar',
-                    data: {
-                        labels: movies.map(m => m.title.length > 28 ? m.title.substring(0, 26) + '...' : m.title),
-                        datasets: [{
-                            label: 'Average Rating (★)',
-                            data: movies.map(m => m.avg_rating),
-                            backgroundColor: '#2563eb',
-                            hoverBackgroundColor: '#1d4ed8',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    afterLabel: (ctx) => `Reviews: ${movies[ctx.dataIndex].total_ratings.toLocaleString()} | Year: ${movies[ctx.dataIndex].release_year || 'N/A'}`
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                min: xMin,
-                                max: xMax,
-                                grid: { color: '#f1f5f9' },
-                                ticks: {
-                                    callback: (val) => val.toFixed(1) + ' ★',
-                                    color: '#64748b'
-                                }
-                            },
-                            y: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to load top movies:", err);
-            }
-        }
-
-        // =============================================================
-        // 5. Scenario 3(f): Dominant Genre
-        // =============================================================
-        async function loadDominantGenre(year = 2017) {
-            try {
-                const res = await fetch(`/api/analytics/dominant-genre/?year=${year}`);
-                const data = await res.json();
-                document.getElementById('dominantLatency').textContent = `${data.latency_ms} ms`;
-                document.getElementById('dominantYearPill').textContent = year;
-
-                if (data.dominant) {
-                    document.getElementById('dominantGenreTitle').textContent = data.dominant.genre;
-                    document.getElementById('dominantGenreCount').textContent = data.dominant.count.toLocaleString();
-                }
-
-                const allGenres = (data.all_genres || []).slice(0, 6);
-
-                renderChart('chartDominantGenre', {
-                    type: 'bar',
-                    data: {
-                        labels: allGenres.map(g => g.genre),
-                        datasets: [{
-                            label: 'Releases',
-                            data: allGenres.map(g => g.count),
-                            backgroundColor: '#e11d48',
-                            hoverBackgroundColor: '#be123c',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { font: { size: 10, weight: 600 }, color: '#334155' } }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to load dominant genre:", err);
-            }
-        }
-
-        // =============================================================
-        // 6. Scenario 3(c): Popular Tags by Genre
-        // =============================================================
-        async function loadGenreTags(selectedGenre = "Action") {
-            try {
-                if (!cachedGenreTags) {
-                    const res = await fetch('/api/analytics/popular-tags-genre/');
-                    const data = await res.json();
-                    cachedGenreTags = data.genres || {};
-                    document.getElementById('genreTagsLatency').textContent = `${data.latency_ms} ms`;
-                }
-
-                const canvas = document.getElementById('chartGenreTags');
-                const emptyBox = document.getElementById('chartGenreTagsEmpty');
-                const emptyTitle = document.getElementById('chartGenreTagsEmptyTitle');
-                const emptySubtitle = document.getElementById('chartGenreTagsEmptySubtitle');
-
-                const hasAnyData = Object.keys(cachedGenreTags).some(g => cachedGenreTags[g] && cachedGenreTags[g].length > 0);
-
-                if (!hasAnyData) {
-                    if (charts['chartGenreTags']) {
-                        charts['chartGenreTags'].destroy();
-                        delete charts['chartGenreTags'];
-                    }
-                    if (canvas) canvas.style.display = 'none';
-                    if (emptyBox) {
-                        emptyBox.classList.remove('d-none');
-                        emptyBox.classList.add('d-flex');
-                        if (emptyTitle) emptyTitle.textContent = "No Tag Dataset Detected";
-                        if (emptySubtitle) emptySubtitle.textContent = "Tags data not ingested. Ingest tags to view genre rankings.";
-                    }
-                    return;
-                }
-
-                const tags = cachedGenreTags[selectedGenre] || [];
-
-                if (!tags || tags.length === 0) {
-                    if (charts['chartGenreTags']) {
-                        charts['chartGenreTags'].destroy();
-                        delete charts['chartGenreTags'];
-                    }
-                    if (canvas) canvas.style.display = 'none';
-                    if (emptyBox) {
-                        emptyBox.classList.remove('d-none');
-                        emptyBox.classList.add('d-flex');
-                        if (emptyTitle) emptyTitle.textContent = `No Tags for ${selectedGenre}`;
-                        if (emptySubtitle) emptySubtitle.textContent = `No user tags recorded for ${selectedGenre} in this dataset.`;
-                    }
-                    return;
-                }
-
-                if (canvas) canvas.style.display = 'block';
-                if (emptyBox) {
-                    emptyBox.classList.add('d-none');
-                    emptyBox.classList.remove('d-flex');
-                }
-
-                renderChart('chartGenreTags', {
-                    type: 'bar',
-                    data: {
-                        labels: tags.map(t => t.tag),
-                        datasets: [{
-                            label: 'Frequency',
-                            data: tags.map(t => t.count),
-                            backgroundColor: '#059669',
-                            hoverBackgroundColor: '#047857',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to load genre tags:", err);
-            }
-        }
-
-        // =============================================================
-        // 7. Scenario 3(g): Genre-wise Movie Coverage
-        // =============================================================
-        async function loadGenreCoverage() {
-            try {
-                const res = await fetch('/api/analytics/genre-coverage/');
-                const data = await res.json();
-                document.getElementById('coverageLatency').textContent = `${data.latency_ms} ms`;
-                const cov = data.coverage || [];
-
-                renderChart('chartGenreCoverage', {
-                    type: 'doughnut',
-                    data: {
-                        labels: cov.slice(0, 8).map(c => c.genre),
-                        datasets: [{
-                            data: cov.slice(0, 8).map(c => c.coverage_pct),
-                            backgroundColor: [
-                                '#4f46e5', '#06b6d4', '#10b981', '#f59e0b',
-                                '#e11d48', '#8b5cf6', '#2563eb', '#64748b'
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        cutout: '72%',
-                        plugins: {
-                            legend: {
-                                position: 'right',
-                                labels: { font: { size: 11, weight: 600 }, color: '#475569', boxWidth: 12, padding: 10 }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: (ctx) => ` ${ctx.label}: ${ctx.parsed}% of catalog`
-                                }
-                            }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to load genre coverage:", err);
-            }
-        }
-
-        // =============================================================
-        // 8. Scenario 3(e): Total Ratings Volume Distribution
-        // =============================================================
-        async function loadTotalRatingsVolume() {
-            try {
-                const res = await fetch('/api/analytics/total-ratings-distribution/');
-                const data = await res.json();
-                document.getElementById('volumeLatency').textContent = `${data.latency_ms} ms`;
-                const dist = data.distribution || [];
-
-                renderChart('chartRatingsVolume', {
-                    type: 'bar',
-                    data: {
-                        labels: dist.map(d => d.bucket),
-                        datasets: [{
-                            label: 'Titles',
-                            data: dist.map(d => d.count),
-                            backgroundColor: '#7c3aed',
-                            hoverBackgroundColor: '#6d28d9',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
-                        }
-                    }
-                });
-            } catch (err) {
-                console.error("Failed to load ratings volume:", err);
-            }
-        }
-
-        // =============================================================
-        // 9. Autocomplete Search Logic
-        // =============================================================
-        let searchDebounce;
-        const searchInput = document.getElementById('movieSearchInput');
-        const searchDropdown = document.getElementById('searchDropdown');
-
-        searchInput.addEventListener('input', () => {
-            clearTimeout(searchDebounce);
-            const q = searchInput.value.trim();
-            if (q.length < 2) {
-                searchDropdown.style.display = 'none';
                 return;
             }
-            searchDebounce = setTimeout(async () => {
-                try {
-                    const res = await fetch(`/api/movies/search/?q=${encodeURIComponent(q)}`);
-                    const data = await res.json();
-                    const results = data.results || [];
-                    searchDropdown.innerHTML = '';
-                    if (results.length === 0) {
-                        searchDropdown.innerHTML = '<div class="p-3 text-muted small">No matching movies found</div>';
-                    } else {
-                        results.forEach(m => {
-                            const div = document.createElement('div');
-                            div.className = 'search-item';
-                            div.innerHTML = `
-                                <div>
-                                    <span class="fw-semibold text-dark">${m.title}</span>
-                                    <small class="text-muted ms-1 font-mono">(${m.release_year || 'N/A'})</small>
-                                </div>
-                                <span class="badge font-mono" style="background:#f1f5f9; color:#475569; border:1px solid #e2e8f0;">#${m.movie_id}</span>
-                            `;
-                            div.onclick = () => selectMovie(m.movie_id, m.title);
-                            searchDropdown.appendChild(div);
-                        });
+
+            if (canvas) canvas.style.display = 'block';
+            if (emptyBox) {
+                emptyBox.classList.add('hidden');
+                emptyBox.classList.remove('flex');
+            }
+
+            // Rescale dynamically on tightly clustered scores
+            const scores = tags.map(t => t.relevance);
+            const minScore = scores.length ? Math.min(...scores) : 0;
+            let xMin = 0;
+            if (minScore >= 0.95) {
+                xMin = Math.max(0, Math.floor((minScore - 0.015) * 50) / 50);
+            } else if (minScore >= 0.85) {
+                xMin = Math.max(0, Math.floor((minScore - 0.03) * 20) / 20);
+            } else if (minScore >= 0.60) {
+                xMin = Math.max(0, Math.floor((minScore - 0.05) * 10) / 10);
+            }
+
+            renderChart('chartTags', {
+                type: 'bar',
+                data: {
+                    labels: tags.map(t => t.tag.toUpperCase()),
+                    datasets: [{
+                        data: tags.map(t => t.relevance),
+                        backgroundColor: SWISS_PALETTE.black,
+                        hoverBackgroundColor: SWISS_PALETTE.cobalt,
+                        borderWidth: 1.5,
+                        borderColor: SWISS_PALETTE.black,
+                        barPercentage: 0.65
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` RELEVANCE: ${ctx.parsed.x.toFixed(4)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: xMin,
+                            max: 1.0,
+                            grid: { color: SWISS_PALETTE.grid },
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                        }
                     }
+                }
+            });
+        } catch (err) {
+            console.error("Failed to load movie tags:", err);
+        }
+    }
+
+    // =============================================================
+    // 3. Scenario 3(d): User Rating Distribution (0.5 to 5.0)
+    // =============================================================
+    async function loadRatingDistribution(movieId) {
+        try {
+            const res = await fetch(`/api/analytics/rating-distribution/?movie_id=${movieId}`);
+            const data = await res.json();
+            document.getElementById('ratingDistLatency').textContent = `${data.latency_ms} MS`;
+            const dist = data.distribution || [];
+            const totalVotes = dist.reduce((sum, d) => sum + (d.count || 0), 0);
+
+            const scaleType = chartScales['chartRatingDist'] || 'linear';
+
+            renderChart('chartRatingDist', {
+                type: 'bar',
+                data: {
+                    labels: dist.map(d => `${d.rating}★`),
+                    datasets: [{
+                        label: 'Votes',
+                        data: dist.map(d => d.count),
+                        backgroundColor: SWISS_PALETTE.black,
+                        hoverBackgroundColor: SWISS_PALETTE.cobalt,
+                        borderColor: SWISS_PALETTE.black,
+                        borderWidth: 1.5,
+                        barPercentage: 0.72
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const val = ctx.parsed.y;
+                                    const pct = totalVotes > 0 ? ((val / totalVotes) * 100).toFixed(1) : 0;
+                                    return ` VOTES: ${val.toLocaleString()} (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                        },
+                        y: {
+                            type: scaleType,
+                            beginAtZero: true,
+                            grid: { color: SWISS_PALETTE.grid },
+                            ticks: {
+                                font: { size: 10, weight: 'bold' },
+                                color: '#000000',
+                                callback: v => v >= 1000 ? (v / 1000) + 'k' : v
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Failed to load rating distribution:", err);
+        }
+    }
+
+    // =============================================================
+    // 4. Scenario 3(b): Top 10 Movies Overall / Year-wise
+    // =============================================================
+    async function loadTopMovies(year = null) {
+        try {
+            const url = year ? `/api/analytics/top-movies/?year=${year}&limit=10` : '/api/analytics/top-movies/?limit=10';
+            const res = await fetch(url);
+            const data = await res.json();
+            document.getElementById('topMoviesLatency').textContent = `${data.latency_ms} MS`;
+            const badge = document.getElementById('topMoviesFilterBadge');
+            if (badge) badge.textContent = year ? `COHORT: ${year}` : 'COHORT: ALL-TIME';
+
+            const movies = data.movies || [];
+            const scores = movies.map(m => m.avg_rating);
+            const minScore = scores.length ? Math.min(...scores) : 3.5;
+            const xMin = Math.max(0, Math.floor((minScore - 0.2) * 2) / 2);
+
+            renderChart('chartTopMovies', {
+                type: 'bar',
+                data: {
+                    labels: movies.map(m => m.title.length > 28 ? m.title.substring(0, 26) + '...' : m.title),
+                    datasets: [{
+                        data: movies.map(m => m.avg_rating),
+                        backgroundColor: SWISS_PALETTE.black,
+                        hoverBackgroundColor: SWISS_PALETTE.cobalt,
+                        borderColor: SWISS_PALETTE.black,
+                        borderWidth: 1.5,
+                        barPercentage: 0.65
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` MEAN: ${ctx.parsed.x.toFixed(2)} ★ (${movies[ctx.dataIndex].total_ratings.toLocaleString()} ratings)`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            min: xMin,
+                            max: 5.0,
+                            grid: { color: SWISS_PALETTE.grid },
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                        }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Failed to load top movies:", err);
+        }
+    }
+
+    // =============================================================
+    // 5. Scenario 3(f): Dominant Genre for Given Year
+    // =============================================================
+    async function loadDominantGenre(year = 2017) {
+        try {
+            const res = await fetch(`/api/analytics/dominant-genre/?year=${year}`);
+            const data = await res.json();
+            document.getElementById('dominantLatency').textContent = `${data.latency_ms} MS`;
+            document.getElementById('dominantGenreTitle').textContent = data.dominant_genre || 'N/A';
+            document.getElementById('dominantGenreCount').textContent = (data.movie_count || 0).toLocaleString();
+            document.getElementById('dominantYearPill').textContent = year;
+
+            const allGenres = data.all_genres || [];
+            renderChart('chartDominantGenre', {
+                type: 'bar',
+                data: {
+                    labels: allGenres.map(g => g.genre.toUpperCase()),
+                    datasets: [{
+                        data: allGenres.map(g => g.count),
+                        backgroundColor: allGenres.map((g, idx) => {
+                            if (idx === 0) return SWISS_PALETTE.black;
+                            if (idx === 1) return SWISS_PALETTE.gray800;
+                            if (idx === 2) return SWISS_PALETTE.gray600;
+                            if (idx === 3) return SWISS_PALETTE.gray400;
+                            return SWISS_PALETTE.gray200;
+                        }),
+                        borderColor: SWISS_PALETTE.black,
+                        borderWidth: 1.5,
+                        barPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } },
+                        y: { grid: { color: SWISS_PALETTE.grid }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Failed to load dominant genre:", err);
+        }
+    }
+
+    // =============================================================
+    // 6. Scenario 3(c): Popular Tags by Genre
+    // =============================================================
+    async function loadGenreTags(selectedGenre = "Action") {
+        try {
+            if (!cachedGenreTags) {
+                const res = await fetch('/api/analytics/popular-tags-genre/');
+                const data = await res.json();
+                cachedGenreTags = data.genres || {};
+                document.getElementById('genreTagsLatency').textContent = `${data.latency_ms} MS`;
+            }
+
+            const canvas = document.getElementById('chartGenreTags');
+            const emptyBox = document.getElementById('chartGenreTagsEmpty');
+            const emptyTitle = document.getElementById('chartGenreTagsEmptyTitle');
+            const emptySubtitle = document.getElementById('chartGenreTagsEmptySubtitle');
+
+            const hasAnyData = Object.keys(cachedGenreTags).some(g => cachedGenreTags[g] && cachedGenreTags[g].length > 0);
+
+            if (!hasAnyData) {
+                if (charts['chartGenreTags']) {
+                    charts['chartGenreTags'].destroy();
+                    delete charts['chartGenreTags'];
+                }
+                if (canvas) canvas.style.display = 'none';
+                if (emptyBox) {
+                    emptyBox.classList.remove('hidden');
+                    emptyBox.classList.add('flex');
+                    if (emptyTitle) emptyTitle.textContent = "NO TAG DATASET DETECTED";
+                    if (emptySubtitle) emptySubtitle.textContent = "Tag data not ingested. Ingest tags to view genre rankings.";
+                }
+                return;
+            }
+
+            const tags = cachedGenreTags[selectedGenre] || [];
+
+            if (!tags || tags.length === 0) {
+                if (charts['chartGenreTags']) {
+                    charts['chartGenreTags'].destroy();
+                    delete charts['chartGenreTags'];
+                }
+                if (canvas) canvas.style.display = 'none';
+                if (emptyBox) {
+                    emptyBox.classList.remove('hidden');
+                    emptyBox.classList.add('flex');
+                    if (emptyTitle) emptyTitle.textContent = `NO TAGS FOR ${selectedGenre.toUpperCase()}`;
+                    if (emptySubtitle) emptySubtitle.textContent = `Zero user tags recorded for ${selectedGenre} in this catalog.`;
+                }
+                return;
+            }
+
+            if (canvas) canvas.style.display = 'block';
+            if (emptyBox) {
+                emptyBox.classList.add('hidden');
+                emptyBox.classList.remove('flex');
+            }
+
+            renderChart('chartGenreTags', {
+                type: 'bar',
+                data: {
+                    labels: tags.map(t => t.tag.toUpperCase()),
+                    datasets: [{
+                        label: 'Frequency',
+                        data: tags.map(t => t.count),
+                        backgroundColor: SWISS_PALETTE.cobalt,
+                        borderColor: SWISS_PALETTE.black,
+                        borderWidth: 1.5,
+                        barPercentage: 0.65
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: SWISS_PALETTE.grid }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } },
+                        y: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' } }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Failed to load genre tags:", err);
+        }
+    }
+
+    // =============================================================
+    // 7. Scenario 3(g): Genre-wise Movie Coverage
+    // =============================================================
+    async function loadGenreCoverage() {
+        try {
+            const res = await fetch('/api/analytics/genre-coverage/');
+            const data = await res.json();
+            document.getElementById('coverageLatency').textContent = `${data.latency_ms} MS`;
+            const cov = data.coverage || [];
+
+            renderChart('chartGenreCoverage', {
+                type: 'doughnut',
+                data: {
+                    labels: cov.slice(0, 8).map(c => c.genre.toUpperCase()),
+                    datasets: [{
+                        data: cov.slice(0, 8).map(c => c.coverage_pct),
+                        backgroundColor: [
+                            SWISS_PALETTE.black,
+                            SWISS_PALETTE.cobalt,
+                            SWISS_PALETTE.gray600,
+                            SWISS_PALETTE.gray400,
+                            SWISS_PALETTE.gray200,
+                            '#d4d4d8',
+                            '#e4e4e7',
+                            '#f4f4f5'
+                        ],
+                        borderColor: SWISS_PALETTE.black,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, font: { size: 9, weight: 'bold' }, color: '#000000' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` COVERAGE: ${ctx.parsed}%`
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Failed to load genre coverage:", err);
+        }
+    }
+
+    // =============================================================
+    // 8. Scenario 3(e): Total Ratings Volume Distribution
+    // =============================================================
+    async function loadTotalRatingsVolume() {
+        try {
+            const res = await fetch('/api/analytics/total-ratings-distribution/');
+            const data = await res.json();
+            document.getElementById('volumeLatency').textContent = `${data.latency_ms} MS`;
+            const dist = data.distribution || [];
+            const scaleType = chartScales['chartRatingsVolume'] || 'linear';
+
+            renderChart('chartRatingsVolume', {
+                type: 'bar',
+                data: {
+                    labels: dist.map(d => d.bucket),
+                    datasets: [{
+                        label: 'Titles',
+                        data: dist.map(d => d.count),
+                        backgroundColor: SWISS_PALETTE.black,
+                        hoverBackgroundColor: SWISS_PALETTE.cobalt,
+                        borderColor: SWISS_PALETTE.black,
+                        borderWidth: 1.5,
+                        barPercentage: 0.72
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` TITLES: ${ctx.parsed.y.toLocaleString()}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 'bold' }, color: '#000000' }
+                        },
+                        y: {
+                            type: scaleType,
+                            beginAtZero: true,
+                            grid: { color: SWISS_PALETTE.grid },
+                            ticks: {
+                                font: { size: 10, weight: 'bold' },
+                                color: '#000000',
+                                callback: v => v >= 1000 ? (v / 1000) + 'k' : v
+                            }
+                        }
+                    }
+                }
+            });
+        } catch (err) {
+            console.error("Failed to load total ratings volume:", err);
+        }
+    }
+
+    // =============================================================
+    // 9. Problem 4: Authenticated User Rating Fetcher
+    // =============================================================
+    async function loadUserRating(movieId) {
+        if (!isUserAuthenticated) return;
+        try {
+            const res = await fetch(`/api/ratings/my-rating/?movie_id=${movieId}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const badge = document.getElementById('ratingStatusBadge');
+            const currentRating = data.user_rating !== null && data.user_rating !== undefined ? data.user_rating : data.rating;
+
+            if (currentRating !== null && currentRating !== undefined) {
+                setRatingValue(currentRating);
+                if (badge) {
+                    badge.textContent = 'COMMITTED';
+                    badge.className = 'text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 bg-[#1d4ed8] text-white border border-black';
+                }
+            } else {
+                setRatingValue(4.0);
+                if (badge) {
+                    badge.textContent = 'UNCOMMITTED';
+                    badge.className = 'text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 bg-neutral-200 border border-black text-black';
+                }
+            }
+        } catch (e) {
+            console.warn('Could not fetch user rating', e);
+        }
+    }
+
+    // =============================================================
+    // 10. Search Autocomplete & Selection Logic
+    // =============================================================
+    const searchInput = document.getElementById('movieSearchInput');
+    const searchDropdown = document.getElementById('searchDropdown');
+    let searchDebounceTimer;
+
+    searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchDebounceTimer);
+        const q = e.target.value.trim();
+        if (q.length < 2) {
+            searchDropdown.style.display = 'none';
+            return;
+        }
+
+        searchDebounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/movies/search/?q=${encodeURIComponent(q)}&limit=10`);
+                const data = await res.json();
+                const results = data.results || [];
+                searchDropdown.innerHTML = '';
+
+                if (results.length === 0) {
+                    searchDropdown.innerHTML = '<div class="p-3 text-neutral-500 font-mono text-xs uppercase">NO TITLES FOUND IN CORE ARCHIVE</div>';
                     searchDropdown.style.display = 'block';
-                } catch (e) {
-                    console.error("Autocomplete failure:", e);
+                    return;
                 }
-            }, 250);
-        });
 
-        document.getElementById('btnClearSearch').addEventListener('click', () => {
-            searchInput.value = '';
-            searchDropdown.style.display = 'none';
-        });
-
-        document.addEventListener('click', (e) => {
-            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
-                searchDropdown.style.display = 'none';
-            }
-        });
-
-        function selectMovie(id, title) {
-            activeMovieId = id;
-            searchInput.value = title;
-            searchDropdown.style.display = 'none';
-            // Update active quick pick button state
-            document.querySelectorAll('.quick-pick-btn').forEach(btn => {
-                if (parseInt(btn.dataset.id) === id) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            loadMovieDetails(id);
-            loadMovieTags(id);
-            loadRatingDistribution(id);
-            loadUserRating(id);
-        }
-
-        // Quick Pick Click Handlers
-        document.querySelectorAll('.quick-pick-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const id = parseInt(btn.dataset.id);
-                const title = btn.dataset.title;
-                selectMovie(id, title);
-            });
-        });
-
-        // =============================================================
-        // 10. Problem 4: Interactive Star & Rating Controls
-        // =============================================================
-        const starIcons = document.querySelectorAll('#interactiveStars i');
-        const ratingPillButtons = document.querySelectorAll('.rating-pill');
-
-        starIcons.forEach(star => {
-            star.addEventListener('click', () => {
-                activeRating = parseFloat(star.dataset.val);
-                setRatingValue(activeRating);
-            });
-        });
-
-        ratingPillButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const val = parseFloat(btn.dataset.rating);
-                setRatingValue(val);
-            });
-        });
-
-        function setRatingValue(val) {
-            activeRating = val;
-            document.getElementById('userRatingLabel').textContent = `${activeRating.toFixed(1)} ★`;
-            updateRatingControlVisuals(activeRating);
-        }
-
-        function updateRatingControlVisuals(rating) {
-            // Update stars
-            starIcons.forEach(s => {
-                const val = parseFloat(s.dataset.val);
-                if (val <= rating) {
-                    s.className = 'ti ti-star-filled filled';
-                } else if (val - 0.5 <= rating) {
-                    s.className = 'ti ti-star-half-filled filled';
-                } else {
-                    s.className = 'ti ti-star';
-                }
-            });
-            // Update active pill
-            ratingPillButtons.forEach(btn => {
-                const pillVal = parseFloat(btn.dataset.rating);
-                if (Math.abs(pillVal - rating) < 0.01) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-        }
-
-        async function loadUserRating(movieId) {
-            const userRatingLabel = document.getElementById('userRatingLabel');
-            const ratingStatusBadge = document.getElementById('ratingStatusBadge');
-            const btnSaveRating = document.getElementById('btnSaveRating');
-            const alertBox = document.getElementById('ratingAlert');
-            if (alertBox) alertBox.style.display = 'none';
-
-            if (!isUserAuthenticated) {
-                if (ratingStatusBadge) {
-                    ratingStatusBadge.textContent = 'Guest Mode';
-                    ratingStatusBadge.className = 'badge bg-light text-secondary border font-mono';
-                }
-                userRatingLabel.textContent = '🔒 Login to Rate';
-                updateRatingControlVisuals(4.0);
-                return;
-            }
-
-            try {
-                const res = await fetch(`/api/ratings/user-rating/?movie_id=${movieId}`);
-                const data = await res.json();
-                if (data.authenticated && data.has_rated) {
-                    activeRating = parseFloat(data.rating);
-                    userRatingLabel.textContent = `${activeRating.toFixed(1)} ★`;
-                    if (ratingStatusBadge) {
-                        ratingStatusBadge.textContent = 'Already Rated';
-                        ratingStatusBadge.className = 'badge bg-success-subtle text-success border border-success-subtle font-mono';
-                    }
-                    if (btnSaveRating) {
-                        btnSaveRating.innerHTML = '<i class="ti ti-edit fs-5"></i> Update Rating in PostgreSQL';
-                    }
-                    updateRatingControlVisuals(activeRating);
-                } else {
-                    activeRating = 4.0;
-                    userRatingLabel.textContent = `${activeRating.toFixed(1)} ★ (Not Yet Rated)`;
-                    if (ratingStatusBadge) {
-                        ratingStatusBadge.textContent = 'Not Rated Yet';
-                        ratingStatusBadge.className = 'badge bg-warning-subtle text-warning border border-warning-subtle font-mono';
-                    }
-                    if (btnSaveRating) {
-                        btnSaveRating.innerHTML = '<i class="ti ti-device-floppy fs-5"></i> Save Rating in PostgreSQL';
-                    }
-                    updateRatingControlVisuals(activeRating);
-                }
-            } catch (err) {
-                console.error("Could not fetch user rating:", err);
-            }
-        }
-
-        document.getElementById('btnSaveRating').addEventListener('click', async () => {
-            const alertBox = document.getElementById('ratingAlert');
-            alertBox.style.display = 'block';
-            alertBox.className = 'mt-2 text-center small font-mono text-muted';
-            alertBox.textContent = 'Writing to PostgreSQL fact_ratings...';
-
-            try {
-                const res = await fetch('/api/ratings/rate/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ movie_id: activeMovieId, rating: activeRating })
+                results.forEach(m => {
+                    const item = document.createElement('div');
+                    item.className = 'search-item';
+                    item.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold uppercase">${m.title}</span>
+                            <span class="text-neutral-400">(${m.release_year || 'N/A'})</span>
+                        </div>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 bg-black text-white">ID #${m.movie_id}</span>
+                    `;
+                    item.addEventListener('click', () => {
+                        selectMovie(m.movie_id, m.title);
+                    });
+                    searchDropdown.appendChild(item);
                 });
-                const contentType = res.headers.get('content-type') || '';
-                if (res.status === 302 || !contentType.includes('application/json')) {
-                    alertBox.className = 'mt-2 text-center small font-mono text-warning';
-                    alertBox.innerHTML = '🔒 You must be logged in. <a href="/login/" class="text-warning fw-bold">Click here to login</a>.';
-                    return;
-                }
-                const data = await res.json();
-                if (res.status === 401 || data.login_url) {
-                    alertBox.className = 'mt-2 text-center small font-mono text-warning';
-                    alertBox.innerHTML = `🔒 ${data.error} <a href="${data.login_url}" class="text-warning fw-bold">Login here</a>.`;
-                    return;
-                }
-                if (data.success) {
-                    alertBox.className = 'mt-2 text-center small font-mono text-success';
-                    alertBox.textContent = `✓ Rating of ${activeRating}★ recorded in database! (${data.action})`;
-                    showToast(`Rating of ${activeRating}★ committed to fact_ratings!`);
-                    // Refresh movie details & distribution live
-                    loadMovieDetails(activeMovieId);
-                    loadRatingDistribution(activeMovieId);
-                    loadUserRating(activeMovieId);
-                } else {
-                    alertBox.className = 'mt-2 text-center small font-mono text-danger';
-                    alertBox.textContent = data.error || 'Failed to record rating';
-                }
+                searchDropdown.style.display = 'block';
             } catch (err) {
-                alertBox.className = 'mt-2 text-center small font-mono text-danger';
-                alertBox.textContent = 'Network or server error submitting rating';
+                console.error("Search query failed:", err);
+            }
+        }, 220);
+    });
+
+    document.getElementById('btnClearSearch').addEventListener('click', () => {
+        searchInput.value = '';
+        searchDropdown.style.display = 'none';
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+            searchDropdown.style.display = 'none';
+        }
+    });
+
+    function selectMovie(id, title) {
+        activeMovieId = id;
+        searchInput.value = title;
+        searchDropdown.style.display = 'none';
+
+        // Update active quick pick button state
+        document.querySelectorAll('.quick-pick-btn').forEach(btn => {
+            if (parseInt(btn.dataset.id) === id) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
             }
         });
 
-        // Year Selector Change
-        document.getElementById('yearSelector').addEventListener('change', (e) => {
-            activeYear = e.target.value;
-            loadTopMovies(activeYear);
-            loadDominantGenre(activeYear || 2017);
+        loadMovieDetails(id);
+        loadMovieTags(id);
+        loadRatingDistribution(id);
+        loadUserRating(id);
+    }
+
+    // Quick Pick Click Handlers
+    document.querySelectorAll('.quick-pick-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = parseInt(btn.dataset.id);
+            const title = btn.dataset.title;
+            selectMovie(id, title);
         });
+    });
 
-        // Genre Pill Filters
-        document.querySelectorAll('.genre-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                loadGenreTags(btn.dataset.genre);
-            });
+    // =============================================================
+    // 11. Interactive Rating Control Listeners
+    // =============================================================
+    const starIcons = document.querySelectorAll('#interactiveStars i');
+    const ratingSlider = document.getElementById('ratingSlider');
+
+    starIcons.forEach(star => {
+        star.addEventListener('click', () => {
+            const score = parseFloat(star.dataset.val);
+            setRatingValue(score);
         });
+    });
 
-        // Initialize Everything on DOM Load
-        window.addEventListener('DOMContentLoaded', async () => {
-            // Clear any lingering dark theme in localStorage
-            localStorage.removeItem('movielens-theme');
+    if (ratingSlider) {
+        ratingSlider.addEventListener('input', (e) => {
+            setRatingValue(parseFloat(e.target.value));
+        });
+    }
 
+    // Commit Rating Button Action
+    document.getElementById('btnSaveRating').addEventListener('click', async () => {
+        const alertBox = document.getElementById('ratingAlert');
+        const badge = document.getElementById('ratingStatusBadge');
+
+        try {
             const t0 = performance.now();
+            const res = await fetch('/api/ratings/rate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken') || ''
+                },
+                body: JSON.stringify({
+                    movie_id: activeMovieId,
+                    rating: activeRating
+                })
+            });
 
-            // Load current user info for RBAC display
-            try {
-                const userRes = await fetch('/api/user/me/');
-                const userInfo = await userRes.json();
-                const usernameLabel = document.getElementById('usernameLabel');
-                const roleLabel = document.getElementById('roleLabel');
-                const logoutBtn = document.getElementById('logoutBtn');
-                const loginBtn = document.getElementById('loginBtn');
-                const btnSaveRating = document.getElementById('btnSaveRating');
-                const btnLoginToRate = document.getElementById('btnLoginToRate');
+            const data = await res.json();
+            const latency = Math.round(performance.now() - t0);
 
-                if (userInfo.authenticated) {
-                    isUserAuthenticated = true;
-                    usernameLabel.textContent = userInfo.username;
-                    if (userInfo.is_staff) {
-                        roleLabel.textContent = 'ADMIN';
-                        roleLabel.style.background = '#fef2f2';
-                        roleLabel.style.color = '#dc2626';
-                        roleLabel.style.border = '1px solid #fecaca';
-                    } else {
-                        roleLabel.textContent = 'USER';
-                        roleLabel.style.background = '#f0fdf4';
-                        roleLabel.style.color = '#16a34a';
-                        roleLabel.style.border = '1px solid #bbf7d0';
-                    }
-                    logoutBtn.style.display = 'inline-flex';
-                    if (btnSaveRating) btnSaveRating.style.display = 'flex';
-                    if (btnLoginToRate) btnLoginToRate.style.display = 'none';
-                } else {
-                    isUserAuthenticated = false;
-                    usernameLabel.textContent = 'Guest';
-                    roleLabel.textContent = 'GUEST';
-                    roleLabel.style.background = '#f1f5f9';
-                    roleLabel.style.color = '#64748b';
-                    roleLabel.style.border = '1px solid #e2e8f0';
-                    loginBtn.style.display = 'inline-flex';
-
-                    // Show Clickable Login button in rating panel for guests
-                    if (btnSaveRating) btnSaveRating.style.display = 'none';
-                    if (btnLoginToRate) btnLoginToRate.style.display = 'flex';
+            if (res.ok && data.success) {
+                if (badge) {
+                    badge.textContent = 'COMMITTED';
+                    badge.className = 'text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 bg-[#1d4ed8] text-white border border-black';
                 }
-            } catch (e) { console.warn('Could not load user info', e); }
+                showToast(`STATUS: RATING COMMITTED TO FACT_RATINGS IN ${latency} MS`);
 
-            await Promise.all([
-                loadMovieDetails(1),
-                loadMovieTags(1),
-                loadRatingDistribution(1),
-                loadUserRating(1),
-                loadTopMovies(2017),
-                loadDominantGenre(2017),
-                loadGenreTags("Action"),
-                loadGenreCoverage(),
-                loadTotalRatingsVolume()
-            ]);
-            const elapsed = Math.round(performance.now() - t0);
-            document.getElementById('globalLatency').textContent = `${elapsed} ms`;
+                // Instantly refresh movie stats and distribution
+                loadMovieDetails(activeMovieId);
+                loadRatingDistribution(activeMovieId);
+            } else {
+                showToast(`ERROR: ${data.error || 'FAILED TO RECORD RATING'}`);
+            }
+        } catch (err) {
+            showToast('NETWORK OR SERVER ERROR COMMITTING TRANSACTION');
+        }
+    });
+
+    // Year Selector Change Handler
+    document.getElementById('yearSelector').addEventListener('change', (e) => {
+        activeYear = e.target.value ? parseInt(e.target.value) : null;
+        loadTopMovies(activeYear);
+        loadDominantGenre(activeYear || 2017);
+    });
+
+    // Genre Pill Filter Handlers
+    document.querySelectorAll('.genre-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadGenreTags(btn.dataset.genre);
         });
-    </script>
+    });
+
+    // Helper: CSRF Cookie Extractor
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // =============================================================
+    // 12. Application Initialization
+    // =============================================================
+    window.addEventListener('DOMContentLoaded', async () => {
+        const t0 = performance.now();
+
+        // Load current user session info for RBAC display
+        try {
+            const userRes = await fetch('/api/user/me/');
+            const userInfo = await userRes.json();
+            const usernameLabel = document.getElementById('usernameLabel');
+            const roleLabel = document.getElementById('roleLabel');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnSaveRating = document.getElementById('btnSaveRating');
+            const btnLoginToRate = document.getElementById('btnLoginToRate');
+
+            if (userInfo.authenticated) {
+                isUserAuthenticated = true;
+                usernameLabel.textContent = userInfo.username;
+                if (userInfo.is_staff) {
+                    roleLabel.textContent = 'DBA';
+                    roleLabel.className = 'text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 bg-[#1d4ed8] text-white';
+                } else {
+                    roleLabel.textContent = 'ANALYST';
+                    roleLabel.className = 'text-[9px] font-mono font-extrabold uppercase px-1.5 py-0.5 bg-black text-white';
+                }
+                logoutBtn.style.display = 'inline-flex';
+                loginBtn.style.display = 'none';
+                if (btnSaveRating) btnSaveRating.style.display = 'flex';
+                if (btnLoginToRate) btnLoginToRate.style.display = 'none';
+            } else {
+                isUserAuthenticated = false;
+                usernameLabel.textContent = 'GUEST';
+                roleLabel.textContent = 'UNAUTHENTICATED';
+                roleLabel.className = 'text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 bg-neutral-200 border border-black text-black';
+                loginBtn.style.display = 'inline-flex';
+                logoutBtn.style.display = 'none';
+                if (btnSaveRating) btnSaveRating.style.display = 'none';
+                if (btnLoginToRate) btnLoginToRate.style.display = 'flex';
+            }
+        } catch (e) {
+            console.warn('Could not load user info', e);
+        }
+
+        // Populate available release years dynamically
+        try {
+            const yearsRes = await fetch('/api/analytics/available-years/');
+            if (yearsRes.ok) {
+                const yData = await yearsRes.json();
+                const sel = document.getElementById('yearSelector');
+                if (yData.years && yData.years.length > 0) {
+                    sel.innerHTML = '<option value="">ALL-TIME LONGITUDINAL</option>';
+                    yData.years.forEach(y => {
+                        const opt = document.createElement('option');
+                        opt.value = y;
+                        opt.textContent = `COHORT ${y}`;
+                        if (y === 2017) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('Could not load available years', e);
+        }
+
+        // Parallel analytical pipeline dispatch
+        await Promise.all([
+            loadMovieDetails(1),
+            loadMovieTags(1),
+            loadRatingDistribution(1),
+            loadUserRating(1),
+            loadTopMovies(2017),
+            loadDominantGenre(2017),
+            loadGenreTags("Action"),
+            loadGenreCoverage(),
+            loadTotalRatingsVolume()
+        ]);
+
+        const elapsed = Math.round(performance.now() - t0);
+        document.getElementById('globalLatency').textContent = `${elapsed} ms`;
+    });
+</script>
+
 </body>
 </html>
