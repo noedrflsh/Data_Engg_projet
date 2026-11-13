@@ -246,6 +246,7 @@ def search_movies(query_str: str, limit: int = 10):
 def get_movie_details(movie_id: int):
     """
     Returns full metadata for a movie: title, year, avg_rating, total_ratings, and genres.
+    Uses index-only scan on fact_ratings to reflect live user ratings immediately.
     """
     with connection.cursor() as cur:
         cur.execute("""
@@ -253,16 +254,22 @@ def get_movie_details(movie_id: int):
                 m.movie_id,
                 m.title,
                 m.release_year,
-                COALESCE(s.avg_rating, 0) AS avg_rating,
-                COALESCE(s.total_ratings, 0) AS total_ratings,
+                COALESCE(r_stats.avg_rating, s.avg_rating, 0) AS avg_rating,
+                COALESCE(r_stats.total_ratings, s.total_ratings, 0) AS total_ratings,
                 COALESCE(ARRAY_AGG(g.genre_name ORDER BY g.genre_name) FILTER (WHERE g.genre_name IS NOT NULL), '{}') AS genres
             FROM dim_movies m
+            LEFT JOIN (
+                SELECT movie_id, ROUND(AVG(rating)::numeric, 2) AS avg_rating, COUNT(*) AS total_ratings
+                FROM fact_ratings
+                WHERE movie_id = %s
+                GROUP BY movie_id
+            ) r_stats ON m.movie_id = r_stats.movie_id
             LEFT JOIN mv_movie_rating_stats s ON m.movie_id = s.movie_id
             LEFT JOIN bridge_movie_genre b ON m.movie_id = b.movie_id
             LEFT JOIN dim_genres g ON b.genre_id = g.genre_id
             WHERE m.movie_id = %s
-            GROUP BY m.movie_id, m.title, m.release_year, s.avg_rating, s.total_ratings;
-        """, [movie_id])
+            GROUP BY m.movie_id, m.title, m.release_year, r_stats.avg_rating, r_stats.total_ratings, s.avg_rating, s.total_ratings;
+        """, [movie_id, movie_id])
         row = cur.fetchone()
         if not row:
             return None
@@ -274,6 +281,23 @@ def get_movie_details(movie_id: int):
             'total_ratings': row[4],
             'genres': row[5]
         }
+
+
+def get_user_movie_rating(user_id: int, movie_id: int):
+    """
+    Returns user's rating for a specific movie if one exists, else None.
+    Uses idx_fact_ratings_user_movie for sub-millisecond execution.
+    """
+    with connection.cursor() as cur:
+        cur.execute("""
+            SELECT rating
+            FROM fact_ratings
+            WHERE user_id = %s AND movie_id = %s
+            ORDER BY rating_id DESC
+            LIMIT 1;
+        """, [user_id, movie_id])
+        row = cur.fetchone()
+        return float(row[0]) if row else None
 
 
 def upsert_user_rating(user_id: int, movie_id: int, rating: float):

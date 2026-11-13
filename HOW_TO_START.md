@@ -1,4 +1,4 @@
-# 🚀 How to Start the MovieLens 32M OLAP Web App
+# 🚀 How to Start the MovieLens OLAP Web App
 ### The Complete, Beginner-Friendly Setup & Database Onboarding Guide
 
 > **Course**: DS5003 Data Engineering Lab &bull; IIT Palakkad  
@@ -10,10 +10,10 @@
 
 In a typical beginner Django project, you just run `python manage.py migrate` and Django creates all SQLite or Postgres tables automatically from Python models. 
 
-**This project is different.** It is an enterprise-scale **Data Engineering OLAP (Online Analytical Processing) Platform** handling **32,000,204 ratings** and **2,000,048 tags**:
+**This project is different.** It is an enterprise-scale **Data Engineering OLAP (Online Analytical Processing) Platform** handling **33,832,162 ratings**, **2,328,315 tags**, and **18,472,128 genome relevance scores**:
 
-1. **Unmanaged Relational Warehouse (`managed = False`)**: The dimensional tables (`dim_movies`, `dim_genres`, `fact_ratings`, `fact_tags`, etc.) are defined directly in pure PostgreSQL DDL ([`movie_lens/schema.sql`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/movie_lens/schema.sql)) to preserve strict constraints, types, and primary keys.
-2. **High-Speed Binary Streaming**: Inserting 32 million rows through Django's ORM would take over 12 hours. Our custom pipeline ([`movie_lens/etl_pipeline.py`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/movie_lens/etl_pipeline.py)) uses Psycopg 3 streaming memory buffers to bulk-copy the dataset into PostgreSQL in ~3 minutes.
+1. **Unmanaged Relational Warehouse (`managed = False`)**: The dimensional tables (`dim_movies`, `dim_genres`, `bridge_movie_genre`, `dim_users`, `dim_date`, `fact_ratings`, `fact_tags`, `dim_genome_tags`, `fact_genome_scores`) are defined directly in pure PostgreSQL DDL ([`movie_lens/schema.sql`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/movie_lens/schema.sql)) to preserve strict constraints, types, foreign keys, and primary keys.
+2. **High-Speed Binary Streaming**: Inserting over 33 million rows through Django's ORM would take over 12 hours. Our custom pipeline ([`movie_lens/etl_pipeline.py`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/movie_lens/etl_pipeline.py)) uses Psycopg 3 streaming memory buffers to bulk-copy the dataset into PostgreSQL in ~3 minutes.
 3. **Materialized Views**: The dashboard queries sub-millisecond precomputed summaries ([`movie_lens/optimize.sql`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/movie_lens/optimize.sql)). If you start Django before creating these views, the web server will crash with `relation "mv_movie_rating_stats" does not exist`.
 4. **Django's `migrate` is only for authentication**: Django's built-in `migrate` only creates internal tables like `auth_user`, `django_session`, and `django_admin_log`.
 
@@ -27,7 +27,7 @@ Always follow this exact 8-step sequence:
 flowchart TD
     S1["1. Install Prerequisites\n(Python 3.10+, PostgreSQL 14+, unzip)"] --> S2["2. Setup Python Virtual Environment\n(source .venv/bin/activate && pip install)"]
     S2 --> S3["3. Create PostgreSQL User & Database\n(User: gumbo | DB: movie_lens)"]
-    S3 --> S4["4. Unpack MovieLens 32M Dataset\n(Ensure ml-32m/ folder exists)"]
+    S3 --> S4["4. Unpack MovieLens Dataset\n(Ensure ml-latest/ folder exists)"]
     S4 --> S5["5. Apply DDL Schema\n(psql -f schema.sql)"]
     S5 --> S6["6. Stream Data Ingestion\n(python etl_pipeline.py)"]
     S6 --> S7["7. Apply Indexes & Materialized Views\n(psql -f optimize.sql)"]
@@ -49,7 +49,7 @@ If you are on **Linux (Ubuntu / Debian / Fedora)** or **macOS**, we provide an a
 The script will:
 - Check your virtual environment and install missing dependencies.
 - Verify PostgreSQL connectivity.
-- Unpack `ml-32m.zip` if needed.
+- Unpack `ml-latest.zip` if needed.
 - Run `schema.sql`.
 - Run `etl_pipeline.py` (skipping tables that are already loaded).
 - Run `optimize.sql` (indexes + materialized views).
@@ -136,27 +136,23 @@ PGPASSWORD=2836 psql -h localhost -U gumbo -d movie_lens -c "SELECT 'Connection 
 
 ---
 
-### Step 3: Prepare the MovieLens 32M Dataset
+### Step 3: Prepare the MovieLens Dataset
 
-The ETL ingestion pipeline expects the dataset to reside inside `movie_lens/ml-32m/` containing:
+The ETL ingestion pipeline expects the dataset to reside inside `movie_lens/ml-latest/` (or auto-extracts from `ml-latest.zip` at the project root) containing:
 * `movies.csv`
 * `ratings.csv`
 * `tags.csv`
+* `links.csv`
+* `genome-tags.csv`
+* `genome-scores.csv`
 
-#### If `movie_lens/ml-32m.zip` is already present:
+#### If `ml-latest.zip` is present in the repository root:
 ```bash
 # Unzip inside the movie_lens folder
 cd movie_lens
-unzip ml-32m.zip
+unzip ../ml-latest.zip
 # Confirm the files exist:
-ls -lh ml-32m/
-```
-
-#### If you need to download the dataset fresh:
-```bash
-cd movie_lens
-curl -O https://files.grouplens.org/datasets/movielens/ml-32m.zip
-unzip ml-32m.zip
+ls -lh ml-latest/
 ```
 
 ---
@@ -187,17 +183,18 @@ python etl_pipeline.py
 ```
 
 #### What to Expect During ETL:
-1. **[Step 1/5] Dim Movies & Dim Genres**: Parses titles, extracts release years, explodes genres into 1NF dimension + bridge table (`~3 seconds`).
-2. **[Step 2/5] Dim Date**: Generates 13,500 calendar days (`~1 second`).
-3. **[Step 3/5] Dim Users**: Extracts 200,948 unique user IDs (`~3 seconds`).
-4. **[Step 4/5] Fact Ratings**: Ingests **32,000,204 rows** in chunks of 2,000,000 using binary COPY buffers (`~2 to 4 minutes`). You will see progress counter updates:
+1. **[Step 1/6] Dim Movies & Dim Genres**: Parses titles, extracts release years, explodes genres into 1NF dimension + bridge table (`~3 seconds`).
+2. **[Step 2/6] Dim Date**: Generates 13,500 calendar days (`~1 second`).
+3. **[Step 3/6] Dim Users**: Extracts 330,975 unique user IDs (`~3 seconds`).
+4. **[Step 4/6] Fact Ratings**: Ingests **33,832,162 rows** in chunks of 2,000,000 using binary COPY buffers (`~2 to 4 minutes`). You will see progress counter updates:
    ```text
-   -> Chunk  1: 2,000,000 rows loaded in  12.4s | Progress: 2,000,000 / 32M
-   -> Chunk  2: 2,000,000 rows loaded in  11.8s | Progress: 4,000,000 / 32M
+   -> Chunk  1: 2,000,000 rows loaded in  12.4s | Progress:  2,000,000 ratings
+   -> Chunk  2: 2,000,000 rows loaded in  11.8s | Progress:  4,000,000 ratings
    ...
-   -> Chunk 16: 2,000,204 rows loaded in  12.1s | Progress: 32,000,204 / 32M
+   -> Chunk 17:   832,162 rows loaded in   5.2s | Progress: 33,832,162 ratings
    ```
-5. **[Step 5/5] Fact Tags**: Ingests 2,000,048 cleaned user tags (`~5 seconds`).
+5. **[Step 5/6] Fact Tags**: Ingests 2,328,315 cleaned user tags (`~5 seconds`).
+6. **[Step 6/6] Genome Relevance**: Ingests 1,128 genome tags and 18,472,128 genome relevance scores (`~1 minute`).
 
 > [!TIP]
 > **Idempotent**: If the ETL is interrupted or re-run, it automatically detects existing row counts and skips completed tables!
@@ -355,12 +352,13 @@ python manage.py runserver 127.0.0.1:8000
 
 ---
 
-### 5. `FileNotFoundError: [Errno 2] No such file or directory: 'ml-32m/movies.csv'`
-* **Cause**: Either you ran `etl_pipeline.py` from the root directory instead of `movie_lens/`, or `ml-32m/` is not unzipped.
+### 5. `FileNotFoundError: Could not find MovieLens dataset folder`
+* **Cause**: `ml-latest.zip` was not unpacked into `movie_lens/ml-latest/`.
 * **Fix**:
+  The updated `etl_pipeline.py` will automatically locate `ml-latest.zip` at the repository root and extract it. If needed, manually extract:
   ```bash
   cd movie_lens
-  unzip ml-32m.zip
+  unzip ../ml-latest.zip
   python etl_pipeline.py
   ```
 
