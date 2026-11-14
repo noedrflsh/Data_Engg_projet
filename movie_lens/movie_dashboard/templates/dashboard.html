@@ -588,15 +588,15 @@
             <div class="row g-3 align-items-center">
                 <!-- Movie Search Autocomplete -->
                 <div class="col-lg-5 col-md-6 position-relative">
-                    <label class="form-label text-muted small mb-1 fw-semibold">
-                        <i class="ti ti-search me-1 text-primary"></i>Search Movie (Questions 3a, 3d & Rating):
+                    <label class="form-label text-secondary small mb-1 fw-medium">
+                        <i class="ti ti-search me-1"></i>Search Movies:
                     </label>
                     <div class="input-group">
                         <span class="input-group-text bg-white border-end-0 text-muted" style="border-color: var(--border-subtle);">
                             <i class="ti ti-film"></i>
                         </span>
-                        <input type="text" id="movieSearchInput" class="form-control border-start-0" placeholder="Type title (e.g. Shawshank, Inception, Matrix, Pulp Fiction)..." autocomplete="off" value="Toy Story">
-                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch" style="border-color: var(--border-subtle);">
+                        <input type="text" id="movieSearchInput" class="form-control border-start-0" placeholder="Type title..." autocomplete="on" value="">
+                        <button class="btn btn-outline-secondary" type="button" id="btnClearSearch">
                             <i class="ti ti-x"></i>
                         </button>
                     </div>
@@ -605,21 +605,44 @@
 
                 <!-- Global Year Filter -->
                 <div class="col-lg-3 col-md-3">
-                    <label class="form-label text-muted small mb-1 fw-semibold">
-                        <i class="ti ti-calendar me-1 text-warning"></i>Release Year Filter (Questions 3b, 3f):
+                    <label class="form-label text-secondary small mb-1 fw-medium">
+                        <i class="ti ti-calendar me-1"></i>Release year filter:
                     </label>
                     <select id="yearSelector" class="form-select font-mono">
                         <option value="">Overall (All-Time)</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                        <option value="2020">2020</option>
                         <option value="2019">2019</option>
                         <option value="2018">2018</option>
-                        <option value="2017" selected>2017</option>
+                        <option value="2017">2017</option>
                         <option value="2016">2016</option>
                         <option value="2015">2015</option>
+                        <option value="2014">2014</option>
+                        <option value="2013">2013</option>
+                        <option value="2012">2012</option>
+                        <option value="2011">2011</option>
                         <option value="2010">2010</option>
+                        <option value="2009">2009</option>
+                        <option value="2008">2008</option>
+                        <option value="2007" selected>2007</option>
+                        <option value="2006">2006</option>
                         <option value="2005">2005</option>
+                        <option value="2004">2004</option>
+                        <option value="2003">2003</option>
+                        <option value="2002">2002</option>
+                        <option value="2001">2001</option>
                         <option value="2000">2000</option>
+                        <option value="1999">1999</option>
+                        <option value="1998">1998</option>
+                        <option value="1997">1997</option>
+                        <option value="1996">1996</option>
                         <option value="1995">1995</option>
                         <option value="1994">1994</option>
+                        <option value="1993">1993</option>
+                        <option value="1992">1992</option>
+                        <option value="1991">1991</option>
                     </select>
                 </div>
 
@@ -627,10 +650,10 @@
                 <div class="col-lg-4 col-md-3">
                     <span class="text-muted small d-block mb-1 fw-semibold">Quick Benchmarks:</span>
                     <div class="d-flex flex-wrap gap-1">
-                        <button class="quick-pick-btn active" data-id="1" data-title="Toy Story (1995)">Toy Story</button>
-                        <button class="quick-pick-btn" data-id="318" data-title="Shawshank Redemption">Shawshank</button>
+                        <button class="quick-pick-btn" data-id="6776" data-title="Lagaan: Once Upon a Time in India">Lagaan</button>
                         <button class="quick-pick-btn" data-id="2571" data-title="Matrix, The">The Matrix</button>
-                        <button class="quick-pick-btn" data-id="79132" data-title="Inception">Inception</button>
+                        <button class="quick-pick-btn" data-id="123" data-title="Chungking Express">Chungking Express</button>
+                        <button class="quick-pick-btn" data-id="4306" data-title="Shrek">Shrek</button>
                         <button class="quick-pick-btn" data-id="296" data-title="Pulp Fiction">Pulp Fiction</button>
                     </div>
                 </div>
@@ -676,6 +699,12 @@
                             <span class="hero-stat-hint font-mono">Live fact_ratings count</span>
                         </div>
                     </div>
+                    <div class="vr my-1 opacity-25"></div>
+                    <div class="text-md-end">
+                        <span class="text-secondary small d-block">Total reviews</span>
+                        <span class="fs-3 fw-bold text-dark" id="movieHeroVotes">68,997</span>
+                        <!--<small class="text-secondary d-block">ratings</small>-->
+                    </div>
                 </div>
             </div>
         </section>
@@ -689,13 +718,13 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-tags text-primary fs-5"></i>
-                            3(a) Top-5 Tag Relevance
+                            <i class="ti ti-tags text-primary"></i>
+                            Top 5 tag relevance scores
                         </h6>
                         <span class="badge-latency font-mono" id="tagRelevanceLatency">0 ms</span>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted small mb-3">Genome relevance scores (0.0 to 1.0) ranked for selected movie:</p>
+                        <p class="text-secondary small mb-3">Relevance scores per movie:</p>
                         <div class="chart-box">
                             <canvas id="chartTags"></canvas>
                             <div id="chartTagsEmpty" class="d-none flex-column align-items-center justify-content-center h-100 text-center py-4">
@@ -713,13 +742,13 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-chart-histogram text-warning fs-5"></i>
-                            3(d) Rating Distribution
+                            <i class="ti ti-chart-histogram text-warning"></i>
+                                User Rating Distribution
                         </h6>
                         <span class="badge-latency font-mono" id="ratingDistLatency">0 ms</span>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted small mb-3">Vote counts across 10 rating intervals (0.5 to 5.0 stars):</p>
+                        <p class="text-secondary small mb-3">Frequency of ratings across 10 intervals:</p>
                         <div class="chart-box">
                             <canvas id="chartRatingDist"></canvas>
                         </div>
@@ -732,18 +761,18 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-user-check text-success fs-5"></i>
-                            Problem 4: Rate This Movie
+                            <i class="ti ti-user-check text-success"></i>
+                            User Rating Action
                         </h6>
                         <span class="badge-question font-mono">RBAC</span>
                     </div>
                     <div class="panel-body d-flex flex-column justify-content-between">
                         <div>
-                            <p class="text-muted small mb-3">
-                                Authenticated users can modify or submit new ratings directly into PostgreSQL <code class="font-mono">fact_ratings</code>.
+                            <p class="text-secondary small mb-3">
+                                Authenticated users can rate or modify their existing rating for any movie in the database.
                             </p>
-                            
-                            <div class="rating-interactive-box mb-3">
+
+                            <div class="p-3 rounded-3 mb-3" style="background: #f8fafc; border: 1px solid #e2e8f0;">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="small fw-semibold text-muted">Your Selection:</span>
                                     <div class="d-flex align-items-center gap-2">
@@ -752,31 +781,17 @@
                                     </div>
                                 </div>
                                 <div class="text-center py-2">
-                                    <div class="star-box mb-3" id="interactiveStars">
-                                        <i class="ti ti-star-filled filled" data-val="1"></i>
-                                        <i class="ti ti-star-filled filled" data-val="2"></i>
-                                        <i class="ti ti-star-filled filled" data-val="3"></i>
-                                        <i class="ti ti-star-filled filled" data-val="4"></i>
-                                        <i class="ti ti-star" data-val="5"></i>
-                                    </div>
-                                    <!-- Quick Rating Selection (0.5 to 5.0) -->
-                                    <div class="rating-pills-grid" id="ratingPills">
-                                        <button type="button" class="rating-pill font-mono" data-rating="0.5">0.5</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="1.0">1.0</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="1.5">1.5</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="2.0">2.0</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="2.5">2.5</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="3.0">3.0</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="3.5">3.5</button>
-                                        <button type="button" class="rating-pill font-mono active" data-rating="4.0">4.0</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="4.5">4.5</button>
-                                        <button type="button" class="rating-pill font-mono" data-rating="5.0">5.0</button>
+                                    <div class="star-box" id="interactiveStars">
+                                        <i class="ti ti-star-half-filled filled" data-val="1"></i>
+                                        <i class="ti ti-star-half-filled filled" data-val="2"></i>
+                                        <i class="ti ti-star-half-filled filled" data-val="3"></i>
+                                        <i class="ti ti-star-half-filled filled" data-val="4"></i>
+                                        <i class="ti ti-star-half-filled filled" data-val="5"></i>
                                     </div>
                                 </div>
-                                <div class="d-flex justify-content-between text-muted mt-2" style="font-size: 0.72rem;">
-                                    <span>0.5 Stars (Poor)</span>
-                                    <span>2.5 Stars (Average)</span>
-                                    <span>5.0 Stars (Masterpiece)</span>
+                                <div class="d-flex justify-content-between text-secondary" style="font-size: 0.72rem;">
+                                    <span>0.5 Stars</span>
+                                    <span>5.0 Stars</span>
                                 </div>
                             </div>
                         </div>
@@ -807,8 +822,8 @@
                     <div class="panel-header">
                         <div class="d-flex align-items-center gap-2">
                             <h6 class="panel-title">
-                                <i class="ti ti-trophy fs-5" style="color: #d97706;"></i>
-                                3(b) Top 10 Movies by Average Rating
+                                <i class="ti ti-trophy text-amber"></i>
+                                Top 10 Movies
                             </h6>
                             <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-mono" id="topMoviesFilterBadge">Year: 2017</span>
                         </div>
@@ -828,10 +843,10 @@
                     <div class="panel-header">
                         <div class="d-flex align-items-center gap-2">
                             <h6 class="panel-title">
-                                <i class="ti ti-crown fs-5" style="color: #e11d48;"></i>
-                                3(f) Dominant Genre
+                                <i class="ti ti-crown text-danger"></i>
+                                Dominant genres
                             </h6>
-                            <span class="badge bg-secondary-subtle font-mono text-dark" id="dominantYearPill">2017</span>
+                            <span class="badge bg-secondary-subtle text-dark font-mono" id="dominantYearPill">Year: 2017</span>
                         </div>
                         <span class="badge-latency font-mono" id="dominantLatency">0 ms</span>
                     </div>
@@ -863,8 +878,8 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-hash text-success fs-5"></i>
-                            3(c) Popular Tags by Genre
+                            <i class="ti ti-hash text-success"></i>
+                            Genre-wise popular Tags
                         </h6>
                         <span class="badge-latency font-mono" id="genreTagsLatency">0 ms</span>
                     </div>
@@ -896,8 +911,8 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-chart-pie text-info fs-5"></i>
-                            3(g) Genre Coverage (% of Catalog)
+                            <i class="ti ti-chart-pie text-info"></i>
+                            Genre-wise coverage
                         </h6>
                         <span class="badge-latency font-mono" id="coverageLatency">0 ms</span>
                     </div>
@@ -914,8 +929,8 @@
                 <div class="panel h-100">
                     <div class="panel-header">
                         <h6 class="panel-title">
-                            <i class="ti ti-chart-bar fs-5" style="color: #7c3aed;"></i>
-                            3(e) Total Ratings Volume
+                            <i class="ti ti-chart-bar text-purple"></i>
+                            Total Ratings Volume Distribution
                         </h6>
                         <span class="badge-latency font-mono" id="volumeLatency">0 ms</span>
                     </div>
@@ -986,7 +1001,7 @@
                 const res = await fetch(`/api/movies/details/?movie_id=${movieId}`);
                 if (!res.ok) return;
                 const d = await res.json();
-                
+
                 document.getElementById('movieHeroTitle').textContent = d.title;
                 document.getElementById('movieBadgeId').innerHTML = `<i class="ti ti-film me-1"></i>Movie #${d.movie_id}`;
                 document.getElementById('movieReleaseYear').innerHTML = `<i class="ti ti-calendar me-1"></i>${d.release_year || 'N/A'}`;
@@ -1109,7 +1124,7 @@
                 renderChart('chartRatingDist', {
                     type: 'bar',
                     data: {
-                        labels: dist.map(d => `${d.rating}★`),
+                        labels: dist.map(d => `${d.rating}`),
                         datasets: [{
                             label: 'Votes',
                             data: dist.map(d => d.count),
@@ -1124,7 +1139,7 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                            x: { grid: { display: false }, ticks: { font: { weight: 600 }, color: '#334155' } }
+                            x: { grid: { display: false }, ticks: { color: '#334155', font: { weight: 50 } } }
                         }
                     }
                 });
@@ -1203,7 +1218,7 @@
                 const res = await fetch(`/api/analytics/dominant-genre/?year=${year}`);
                 const data = await res.json();
                 document.getElementById('dominantLatency').textContent = `${data.latency_ms} ms`;
-                document.getElementById('dominantYearPill').textContent = year;
+                document.getElementById('dominantYearPill').textContent = `Year: ${year}`;
 
                 if (data.dominant) {
                     document.getElementById('dominantGenreTitle').textContent = data.dominant.genre;

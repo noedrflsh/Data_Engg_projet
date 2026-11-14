@@ -1,36 +1,36 @@
-# 🎬 MovieLens OLAP Intelligence & Analytics Engine
+# MovieLens OLAP Engine
 
 
 
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https:/www.postgresql.org/)
 [![Django](https://img.shields.io/badge/Django-6.1-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![Python](https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Tests](https://img.shields.io/badge/Tests-13%2F13%20Passed-10b981)](https://github.com/)
-[![Latency](https://img.shields.io/badge/Avg%20Query%20Latency-%3C%2020ms-blue)](https://github.com/)
+<!--[![Latency](https://img.shields.io/badge/Avg%20Query%20Latency-%3C%2020ms-blue)](https://github.com/)-->
+<!--[![Tests](https://img.shields.io/badge/Tests-12%2F12%20Passed-10b981)](https://github.com/)-->
 
 ---
-
-> [!IMPORTANT]
-> **🚀 First Time Starting the Web App?**  
-> For complete, beginner-friendly instructions on creating the PostgreSQL database, streaming the records, and starting the web app without errors, see **[`HOW_TO_START.md`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/HOW_TO_START.md)** or run the automated script:
+> **Automated Script**  
+> For a complete guide on creating the PostgreSQL database, streaming the 32M records and starting the web app without errors - see **[`HOW_TO_START.md`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/HOW_TO_START.md)** 
+> To run the automated script to handle everything:
 > ```bash
 > ./setup_database.sh
 > ```
 
 ---
 
-## 📌 Executive Summary
+## Summary
 
-This project implements an end-to-end **Data Engineering OLAP (Online Analytical Processing) platform** built over the MovieLens dataset (**33,832,162 ratings**, **2,328,315 user tags**, **18,472,128 genome relevance scores**, and **86,537 movies**). 
-
-The platform addresses raw data anomalies through **Third Normal Form (3NF) relational dimensional modeling**, achieves high-speed data ingestion via **Psycopg 3 `COPY` streaming**, optimizes query latency from **~18 seconds down to sub-36 milliseconds** using covering B-Tree indexes and PostgreSQL materialized views, and exposes a high-performance **REST API** powering an executive analytics dashboard with role-based access control (RBAC).
++ This project implements an end-to-end Data Engineering OLAP platform built on the MovieLens 32M dataset (**32,000,204 ratings**, **2,000,048 user tags**, and **87,585 movies**). 
++ The database is in **Third Normal Form (3NF) relational dimensional modeling**. 
++ It achieves high-speed data ingestion via **Psycopg 3 `COPY` streaming**. It optimizes query latency from ~18 seconds down to sub-36 milliseconds using covering B-Tree indexes and PostgreSQL materialized views. 
++ **REST API** is used for the dashboard with role-based access control.
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
-> [!TIP]
-> **Interactive Architecture & ER Diagrams**: Open **[`architecture_diagram.html`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/architecture_diagram.html)** in any browser to interactively switch between the **Database ER Diagram** and the **Full-Stack Flow Diagram** with zoom controls!
+>[!TIP] 
+**Interactive Architecture & ER Diagrams**: Open **[`architecture_diagram.html`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/architecture_diagram.html)** in any browser to interactively switch between the **Database ER Diagram** and the **Full-Stack Flow Diagram**
 
 ```mermaid
 flowchart TD
@@ -62,7 +62,7 @@ flowchart TD
     end
 
     subgraph S4["Interactive Executive Dashboard"]
-        UI["Bootstrap 5 + Chart.js 4.4 Console\n(Inter Font, Tabler Icons, Dark Slate Theme)"]
+        UI["Bootstrap 5 + Chart.js 4.4 Console\n"]
         AUTO["Live Search Autocomplete\n(87K Titles, Debounced)"]
         RATE["Interactive Star Rating Widget\n(Problem 4: Live PostgreSQL Upsert)"]
     end
@@ -78,12 +78,12 @@ flowchart TD
 
 ---
 
-## 🗄️ Relational Schema & Normalization
+## Relational Schema & Normalization
 
 Raw MovieLens CSVs contain denormalized structures that violate relational integrity rules:
-1. **1NF Violation**: The `movies.csv` file stored genres as pipe-separated strings (e.g., `"Adventure|Animation|Children"`). We decomposed this into a dedicated dimension `dim_genres` and an associative bridge table `bridge_movie_genre`.
-2. **2NF / 3NF Normalization**: Extracted calendar dates into a temporal dimension `dim_date (date_key, full_date, year, quarter, month, day)` to allow instantaneous temporal slice-and-dice without costly timestamp parsing during aggregations.
-3. **Primary & Foreign Key Constraints**: Enforced referential integrity across all entities with cascade safety.
+
+1. **1NF Violation**: We decomposed `genres` stored in `movies.csv` as pipe-separated strings (e.g. **"Adventure|Animation|Children"**) into a dedicated dimension `dim_genres` and an associative bridge table `bridge_movie_genre`.
+2. **2NF / 3NF Normalization**: We extracted calendar dates into a dimension table — `dim_date (date_key, full_date, year, quarter, month, day)` — to allow instantaneous temporal slice-and-dice without costly timestamp parsing during aggregations.
 
 ### Database Relations Overview
 
@@ -102,11 +102,48 @@ Raw MovieLens CSVs contain denormalized structures that violate relational integ
 
 ---
 
-## ⚡ Performance Optimization Strategy
+## The 7 Analytical Scenarios (Project Questions)
+
+### Top-5 Tags Based on Relevance Score
+* **Endpoint**: `GET /api/analytics/movie-tags/?movie_id=1&limit=5`
+* **Implementation**: Queries `fact_genome_scores` if available; otherwise falls back to normalized term frequencies computed over `fact_tags` for that specific title.
+
+### Overall & Year-wise Top 10 Movies
+* **Endpoint**: `GET /api/analytics/top-movies/?year=2017&limit=10&min_ratings=100`
+* **Implementation**: Queries `mv_movie_rating_stats` filtered by minimum vote threshold to eliminate single-rating outliers.
+
+### Most Popular Tags Given for Each Genre
+* **Endpoint**: `GET /api/analytics/popular-tags-genre/?limit=5`
+* **Implementation**: Queries `mv_popular_tags_genre` which partitions tags by genre via window functions (`ROW_NUMBER() OVER (...)`).
+
+### Distribution of Users' Ratings for a Selected Movie
+* **Endpoint**: `GET /api/analytics/rating-distribution/?movie_id=1`
+* **Implementation**: Executes an index-only scan on `idx_fact_ratings_movie_rating`, grouping into 10 intervals from 0.5★ to 5.0★.
+
+### Overall Distribution of Total Ratings Across Movies
+* **Endpoint**: `GET /api/analytics/total-ratings-distribution/`
+* **Implementation**: Buckets movie rating volumes into logarithmic power-law bins (`1 rating`, `2-10`, `11-50`, `51-200`, `201-1,000`, `1,001-5,000`, `5,000+`).
+
+### Dominant Genre for a Given Year
+* **Endpoint**: `GET /api/analytics/dominant-genre/?year=2017`
+* **Implementation**: Queries `mv_genre_year_summary` to identify the genre with maximum release volume for that year alongside competitor volumes.
+
+### Genre-wise Coverage of Movies
+* **Endpoint**: `GET /api/analytics/genre-coverage/`
+* **Implementation**: Computes total movie associations per genre as an absolute count and relative percentage of the 87,585 catalog titles.
+
+### Role-Based User Rating Modification
+* **Endpoint**: `POST /api/ratings/rate/`
+* **Payload**: `{"movie_id": 1, "rating": 4.5}`
+* **Implementation**: Enforces role permissions. Standard users can rate or modify ratings. Automatically provisions foreign key dependencies in `dim_date` and `dim_users` and performs an upsert into `fact_ratings`.
+
+---
+
+## Performance Optimization
 
 Querying a 32-million row fact table dynamically without indexing forces PostgreSQL into sequential full-table scans, causing query latency of **15 to 25 seconds per click**. 
 
-We addressed this through a two-tier optimization strategy:
+Optimization for this was done in two ways:
 
 ### 1. Covering B-Tree Indexes
 - `idx_fact_ratings_movie_rating (movie_id, rating)`: Enables an **Index-Only Scan** for rating aggregations and histograms (`Heap Fetches: 0`).
@@ -118,64 +155,27 @@ We addressed this through a two-tier optimization strategy:
 ### 2. Precomputed Materialized Views
 - Catalog-wide aggregations (e.g., average rating per movie, genre releases per year, top tags per genre) are precomputed into materialized views refreshed concurrently.
 
-### 📊 Benchmark Latency Verification
+### Benchmark Latency Verification
 
 | Scenario / Analytical Question | Baseline (Unindexed) | Optimized (Index / Mat. View) | Speedup Factor |
 | :--- | :---: | :---: | :---: |
-| **3(a) Top-5 Tag Relevance** | 2,800 ms | **2.08 ms** | **~1,340x** |
-| **3(b) Top 10 Movies (Overall)** | 18,500 ms | **0.64 ms** | **~28,900x** |
-| **3(c) Popular Tags by Genre** | 3,400 ms | **0.53 ms** | **~6,400x** |
-| **3(d) Movie Rating Distribution** | 14,200 ms | **9.25 ms** | **~1,530x** |
-| **3(e) Total Ratings Distribution**| 16,800 ms | **19.51 ms** | **~860x** |
-| **3(f) Dominant Genre for Year** | 1,200 ms | **0.55 ms** | **~2,180x** |
-| **3(g) Genre-wise Movie Coverage** | 450 ms | **35.69 ms** | **~12x** |
+| **Top-5 Tag Relevance** | 2,800 ms | **2.08 ms** | **~1,340x** |
+| **Top 10 Movies (Overall)** | 18,500 ms | **0.64 ms** | **~28,900x** |
+| **Popular Tags by Genre** | 3,400 ms | **0.53 ms** | **~6,400x** |
+| **Movie Rating Distribution** | 14,200 ms | **9.25 ms** | **~1,530x** |
+| **Total Ratings Distribution**| 16,800 ms | **19.51 ms** | **~860x** |
+| **Dominant Genre for Year** | 1,200 ms | **0.55 ms** | **~2,180x** |
+| **Genre-wise Movie Coverage** | 450 ms | **35.69 ms** | **~12x** |
 | **Movie Search Autocomplete** | 380 ms | **< 1.00 ms** | **~380x** |
 
 ---
 
-## 🎯 The 7 Analytical Scenarios (Project Questions)
-
-### 3(a) Top-5 Tags Based on Relevance Score
-* **Endpoint**: `GET /api/analytics/movie-tags/?movie_id=1&limit=5`
-* **Implementation**: Queries `fact_genome_scores` if available; otherwise falls back to normalized term frequencies computed over `fact_tags` for that specific title.
-
-### 3(b) Overall & Year-wise Top 10 Movies
-* **Endpoint**: `GET /api/analytics/top-movies/?year=2017&limit=10&min_ratings=100`
-* **Implementation**: Queries `mv_movie_rating_stats` filtered by minimum vote threshold to eliminate single-rating outliers.
-
-### 3(c) Most Popular Tags Given for Each Genre
-* **Endpoint**: `GET /api/analytics/popular-tags-genre/?limit=5`
-* **Implementation**: Queries `mv_popular_tags_genre` which partitions tags by genre via window functions (`ROW_NUMBER() OVER (...)`).
-
-### 3(d) Distribution of Users' Ratings for a Selected Movie
-* **Endpoint**: `GET /api/analytics/rating-distribution/?movie_id=1`
-* **Implementation**: Executes an index-only scan on `idx_fact_ratings_movie_rating`, grouping into 10 intervals from 0.5★ to 5.0★.
-
-### 3(e) Overall Distribution of Total Ratings Across Movies
-* **Endpoint**: `GET /api/analytics/total-ratings-distribution/`
-* **Implementation**: Buckets movie rating volumes into logarithmic power-law bins (`1 rating`, `2-10`, `11-50`, `51-200`, `201-1,000`, `1,001-5,000`, `5,000+`).
-
-### 3(f) Dominant Genre for a Given Year
-* **Endpoint**: `GET /api/analytics/dominant-genre/?year=2017`
-* **Implementation**: Queries `mv_genre_year_summary` to identify the genre with maximum release volume for that year alongside competitor volumes.
-
-### 3(g) Genre-wise Coverage of Movies
-* **Endpoint**: `GET /api/analytics/genre-coverage/`
-* **Implementation**: Computes total movie associations per genre as an absolute count and relative percentage of the 87,585 catalog titles.
-
-### Problem 4: Role-Based User Rating Modification
-* **Endpoint**: `POST /api/ratings/rate/`
-* **Payload**: `{"movie_id": 1, "rating": 4.5}`
-* **Implementation**: Enforces role permissions. Standard users can rate or modify ratings. Automatically provisions foreign key dependencies in `dim_date` and `dim_users` and performs an upsert into `fact_ratings`.
-
----
-
-## 🚀 Quickstart & Setup Guide
+## Quickstart & Setup Guide
 
 > [!TIP]
 > **Detailed Guide**: For a beginner-friendly walkthrough explaining database setup, permissions, and troubleshooting, see **[`HOW_TO_START.md`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/HOW_TO_START.md)**.
 
-### Option A: Automated 1-Click Setup (Linux / macOS)
+#### Option A: Automated 1-Click Setup (Linux / macOS)
 ```bash
 ./setup_database.sh
 ```
@@ -229,7 +229,7 @@ Open **[http://127.0.0.1:8000/](http://127.0.0.1:8000/)** in your browser.
 
 ---
 
-## 🧪 Verification & Automated Testing
+## Verification & Automated Testing
 
 The suite in [`movie_lens/test_suite.py`](file:///home/carpenter/Desktop/mtech/DE/de_project/Data_Engg_projet/movie_lens/test_suite.py) validates the live database:
 
