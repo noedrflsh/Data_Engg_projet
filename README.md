@@ -35,18 +35,20 @@
 ```mermaid
 flowchart TD
     subgraph S1["Raw Data Ingestion Layer"]
-        CSV["MovieLens 32M CSVs\n(ratings.csv: 837MB, tags.csv: 70MB, movies.csv)"]
+        CSV["MovieLens CSVs\n(ratings.csv: 933MB, genome-scores.csv: 521MB, tags.csv: 85MB)"]
         ETL["Psycopg 3 Bulk COPY Pipeline\n(etl_pipeline.py - Streaming Memory Buffers)"]
     end
 
     subgraph S2["PostgreSQL OLAP Data Warehouse"]
-        DM["dim_movies\n(87,585 rows)"]
+        DM["dim_movies\n(86,537 rows)"]
         DG["dim_genres\n(19 rows)"]
-        BMG["bridge_movie_genre\n(147,090 rows - 1NF)"]
-        DU["dim_users\n(200,948 rows)"]
+        BMG["bridge_movie_genre\n(1NF Exploded)"]
+        DU["dim_users\n(330,975 rows)"]
         DD["dim_date\n(13,514 rows)"]
-        FR["fact_ratings\n(32,000,204 rows - Partitioned)"]
-        FT["fact_tags\n(2,000,048 rows)"]
+        FR["fact_ratings\n(33,832,162 rows)"]
+        FT["fact_tags\n(2,328,315 rows)"]
+        FGS["fact_genome_scores\n(18,472,128 rows)"]
+        DGT["dim_genome_tags\n(1,128 rows)"]
         
         MV1["mv_movie_rating_stats\n(Precomputed Averages & Counts)"]
         MV2["mv_genre_year_summary\n(Precomputed Releases by Year)"]
@@ -203,7 +205,7 @@ cd movie_lens
 # 1. Create tables
 PGPASSWORD=2836 psql -h localhost -U gumbo -d movie_lens -f schema.sql
 
-# 2. Ingest CSVs (Ensure ml-32m/ folder exists)
+# 2. Ingest CSVs (Ensure ml-latest/ folder exists or ml-latest.zip is in root)
 python etl_pipeline.py
 
 # 3. Create covering indexes & materialized views

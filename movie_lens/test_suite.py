@@ -50,13 +50,19 @@ class MovieLensIntegrationTests(unittest.TestCase):
         self.assertEqual(data['results'][0]['title'], 'Inception')
 
     def test_04_scenario_3a_movie_tags(self):
-        """Scenario 3(a): Top-5 tag relevance for movie."""
+        """Scenario 3(a): Top-5 tag relevance for movie and graceful empty fallback."""
         res = self.client.get('/api/analytics/movie-tags/?movie_id=1&limit=5')
         self.assertEqual(res.status_code, 200)
         data = json.loads(res.content)
         self.assertEqual(data['movie_id'], 1)
         self.assertLessEqual(len(data['tags']), 5)
         self.assertTrue(all('tag' in t and 'relevance' in t for t in data['tags']))
+
+        # Graceful empty handling for movie without genome relevance data
+        res_empty = self.client.get('/api/analytics/movie-tags/?movie_id=99999999&limit=5')
+        self.assertEqual(res_empty.status_code, 200)
+        data_empty = json.loads(res_empty.content)
+        self.assertEqual(data_empty['tags'], [])
 
     def test_05_scenario_3b_top_movies_overall(self):
         """Scenario 3(b): Overall top 10 movies."""
@@ -126,16 +132,45 @@ class MovieLensIntegrationTests(unittest.TestCase):
         data = json.loads(res.content)
         self.assertIn('error', data)
 
+        # 1b. Unauthenticated user rating lookup returns authenticated: False
+        res = self.client.get('/api/ratings/user-rating/?movie_id=1')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.content)
+        self.assertFalse(data['authenticated'])
+
         # 2. Authenticated user can rate/modify
         logged_in = self.client.login(username='demo_user', password='movielens2024')
         self.assertTrue(logged_in)
 
+        # Submit new rating
         res = self.client.post('/api/ratings/rate/', data=json.dumps(payload), content_type='application/json')
         self.assertEqual(res.status_code, 200)
         data = json.loads(res.content)
         self.assertTrue(data['success'])
         self.assertEqual(data['rating'], 4.5)
         self.assertEqual(data['username'], 'demo_user')
+
+        # 3. User rating lookup now returns 4.5
+        res = self.client.get('/api/ratings/user-rating/?movie_id=1')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.content)
+        self.assertTrue(data['has_rated'])
+        self.assertEqual(data['rating'], 4.5)
+
+        # 4. Modify rating to 5.0
+        payload_update = {'movie_id': 1, 'rating': 5.0}
+        res = self.client.post('/api/ratings/rate/', data=json.dumps(payload_update), content_type='application/json')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.content)
+        self.assertTrue(data['success'])
+        self.assertEqual(data['action'], 'updated')
+        self.assertEqual(data['rating'], 5.0)
+
+        # 5. Check user rating lookup reflects updated 5.0
+        res = self.client.get('/api/ratings/user-rating/?movie_id=1')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.content)
+        self.assertEqual(data['rating'], 5.0)
 
     def test_13_authentication_endpoints(self):
         """Verify login, register, and current user info endpoints."""
@@ -149,8 +184,36 @@ class MovieLensIntegrationTests(unittest.TestCase):
         res = self.client.get('/register/')
         self.assertEqual(res.status_code, 200)
 
-        # Test current user endpoint
-        self.client.login(username='demo_user', password='movielens2024')
+        # Test user registration POST with automatic login
+        import uuid
+        test_uname = 'reguser_' + uuid.uuid4().hex[:6]
+        res = self.client.post('/register/', {
+            'username': test_uname,
+            'password1': 'Testing2026!Pass',
+            'password2': 'Testing2026!Pass'
+        }, follow=True)
+        self.assertEqual(res.status_code, 200)
+
+        # Verify new user is authenticated after registration
+        res = self.client.get('/api/user/me/')
+        self.assertEqual(res.status_code, 200)
+        data = json.loads(res.content)
+        self.assertTrue(data['authenticated'])
+        self.assertEqual(data['username'], test_uname)
+        self.assertEqual(data['role'], 'User')
+
+        # Test logout
+        res = self.client.get('/logout/', follow=True)
+        self.assertEqual(res.status_code, 200)
+
+        # Test login with demo_user
+        res = self.client.post('/login/', {
+            'username': 'demo_user',
+            'password': 'movielens2024'
+        }, follow=True)
+        self.assertEqual(res.status_code, 200)
+
+        # Test current user endpoint after login
         res = self.client.get('/api/user/me/')
         self.assertEqual(res.status_code, 200)
         data = json.loads(res.content)

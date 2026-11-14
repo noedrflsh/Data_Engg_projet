@@ -2,7 +2,6 @@
 
 ## 1. Project Overview
 
-This repository hosts the course project for **DS5003: Data Engineering Lab** taught by **Dr. Koninika Pal** at **IIT Palakkad** (handout date: 15.10.2026).
 
 The objective is to design and implement an end-to-end data engineering architecture using the **MovieLens Dataset**. The pipeline extracts, normalizes, and models multi-million row datasets into an **OLAP Star/Snowflake Schema** in **PostgreSQL**, exposed via a **Django Web Application** featuring role-based access control (RBAC) and interactive analytics.
 
@@ -13,7 +12,7 @@ The objective is to design and implement an end-to-end data engineering architec
 ### A. Data Processing & Modeling
 - Ingest raw MovieLens CSV files (`movies.csv`, `ratings.csv`, `tags.csv`, `links.csv`, and genome relevance datasets).
 - Clean and normalize the data into 1NF and star/snowflake dimensional tables optimized for analytical queries.
-- Optimize bulk loading for high-volume fact tables (e.g., 32M+ rating rows).
+- Optimize bulk loading for high-volume fact tables (e.g., 33.8M+ rating rows and 18.4M+ genome score rows in ml-latest).
 
 ### B. Analytical Dashboard Scenarios
 The dashboard must answer and visualize seven analytical questions:
